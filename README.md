@@ -2,15 +2,16 @@
 
 [![CI](https://github.com/Jongsic/openconsole/actions/workflows/ci.yml/badge.svg)](https://github.com/Jongsic/openconsole/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Jongsic/openconsole/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jongsic/openconsole/actions/workflows/deploy.yml)
-[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/Jongsic/openconsole/blob/main/LICENSE)
 
 A **browser-only** console for **LocalStack, MinIO, or real AWS**.
 There is no server: the browser talks to your endpoint directly using the AWS SDK. Connection
 settings live in your browser's `localStorage`.
 
-![OpenConsole](preview.gif)
+![OpenConsole](https://raw.githubusercontent.com/Jongsic/openconsole/main/preview.gif)
 
-**Live:** [https://jongsic.github.io/openconsole/](https://jongsic.github.io/openconsole/)
+**Live:** [https://jongsic.github.io/openconsole/](https://jongsic.github.io/openconsole/) &nbsp;·&nbsp;
+**Source:** [github.com/Jongsic/openconsole](https://github.com/Jongsic/openconsole)
 
 > A fully functional app — **free, no sign-up, no account.** It is a static site that runs
 > entirely in your browser; it sends **no data to any server of ours** and performs **no tracking
@@ -170,18 +171,18 @@ react-router, react-i18next, `@aws-sdk/client-s3`, Biome. Tested with Vitest, CI
 
 ## Disclaimer
 
-This software is released into the public domain under [The Unlicense](LICENSE) and is provided
+This software is released into the public domain under [The Unlicense](https://github.com/Jongsic/openconsole/blob/main/LICENSE) and is provided
 **"AS IS", without warranty of any kind**. Your credentials are stored in your browser's
 `localStorage` in plain text and all requests are made directly from your browser to the endpoint
 you configure. To the maximum extent permitted by law, the authors are **not liable** for any
 damages, credential exposure, data loss, or cloud-provider charges arising from its use — **you
 use it entirely at your own risk** and are solely responsible for securing your credentials, data,
-and infrastructure. See [SECURITY.md](SECURITY.md) for details.
+and infrastructure. See [SECURITY.md](https://github.com/Jongsic/openconsole/blob/main/SECURITY.md) for details.
 
 ## License
 
-[The Unlicense](LICENSE) — public domain. Do anything you want; no attribution required.
+[The Unlicense](https://github.com/Jongsic/openconsole/blob/main/LICENSE) — public domain. Do anything you want; no attribution required.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/Jongsic/openconsole/blob/main/CONTRIBUTING.md).
