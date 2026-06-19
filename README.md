@@ -100,12 +100,18 @@ SPA fallback so client-side routes work on refresh.
 
 ## Docker
 
-A prebuilt image (nginx serving the static bundle) is published on each release:
+A prebuilt image (nginx serving the static bundle) is published on each release — just pull
+and run it, no build needed:
 
 ```bash
-docker run -p 3939:80 ghcr.io/jongsic/openconsole:latest
+docker run -p 3939:80 jongsic/openconsole          # Docker Hub
+# or
+docker run -p 3939:80 ghcr.io/jongsic/openconsole:latest   # GitHub Container Registry
 # → http://localhost:3939
 ```
+
+- Docker Hub: [hub.docker.com/r/jongsic/openconsole](https://hub.docker.com/r/jongsic/openconsole)
+- Tags: `latest` and each release version (e.g. `0.1.0`).
 
 Or build it yourself: `docker build -t openconsole . && docker run -p 3939:80 openconsole`.
 

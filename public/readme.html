@@ -226,10 +226,17 @@
 pnpm dev
 # → http://localhost:3939</code></pre>
 
-        <h3 id="usage-docker" class="i18n" data-en="Build a Docker image" data-ko="Docker 이미지로 활용"></h3>
+        <h3 id="usage-docker" class="i18n" data-en="Docker image" data-ko="Docker 이미지로 활용"></h3>
         <p class="i18n"
-          data-en="Build the static bundle and serve dist/ with any static web server (e.g. nginx). The image has no runtime dependency on a backend."
-          data-ko="정적 번들을 빌드한 뒤 dist/를 정적 웹 서버(예: nginx)로 서빙합니다. 이미지는 백엔드에 대한 런타임 의존성이 없습니다."></p>
+          data-en="Easiest: pull the prebuilt image (nginx serving the static bundle) and run it — no build needed. It has no runtime dependency on a backend."
+          data-ko="가장 간단한 방법: 미리 빌드된 이미지(nginx가 정적 번들을 서빙)를 받아 실행하면 됩니다. 빌드 불필요하며, 백엔드에 대한 런타임 의존성도 없습니다."></p>
+        <pre><code>docker run -p 3939:80 jongsic/openconsole
+# or from GitHub Container Registry:
+docker run -p 3939:80 ghcr.io/jongsic/openconsole:latest
+# → http://localhost:3939</code></pre>
+        <p class="i18n"
+          data-en="Or build the image yourself:"
+          data-ko="또는 직접 이미지를 빌드할 수도 있습니다:"></p>
         <pre><code># Dockerfile
 FROM node:24-alpine AS build
 WORKDIR /app
