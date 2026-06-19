@@ -10,7 +10,7 @@ jobs:
   verify-tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # checkout leaves the triggering tag as a lightweight ref to the commit;
@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -67,7 +67,7 @@ jobs:
       # Set repo secrets DOCKERHUB_USERNAME + DOCKERHUB_TOKEN to also push to Docker Hub.
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Compute image tags
         id: tags
