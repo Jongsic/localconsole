@@ -11,8 +11,18 @@ updates:
           - "@aws-sdk/*"
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # Skip all major (potentially breaking) upgrades — e.g. Tailwind v4,
+      # react-router 7, zustand 5, i18next 26. Take these deliberately, by hand.
+      # Patch/minor updates (including security fixes) still flow automatically.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
