@@ -21,12 +21,46 @@
     "language": "Language",
     "learnMore": "Learn more",
     "open": "Open",
-    "details": "Details"
+    "details": "Details",
+    "yes": "Yes",
+    "no": "No"
   },
   "nav": {
     "comingSoon": "soon",
     "comingSoonBody": "The {{service}} section is coming soon.",
     "disabledForBackend": "Not available for the detected backend ({{backend}})."
+  },
+  "compute": {
+    "section": "Compute",
+    "instances": "Instances",
+    "securityGroups": "Security groups",
+    "volumes": "Volumes",
+    "launchTemplates": "Launch templates",
+    "loadBalancers": "Load balancers",
+    "targetGroups": "Target groups",
+    "asg": "Auto Scaling groups"
+  },
+  "vpc": {
+    "section": "VPC",
+    "vpcs": "Your VPCs",
+    "subnets": "Subnets",
+    "routeTables": "Route tables",
+    "internetGateways": "Internet gateways",
+    "natGateways": "NAT gateways"
+  },
+  "dbcache": {
+    "section": "DB / Cache",
+    "rds": "RDS",
+    "cache": "ElastiCache",
+    "dbClusters": "DB clusters",
+    "dbInstances": "DB instances",
+    "cacheClusters": "Cache clusters",
+    "cacheNodes": "Cache nodes"
+  },
+  "function": {
+    "section": "Function",
+    "functions": "Functions",
+    "layers": "Layers"
   },
   "setup": {
     "title": "Connect to a backend",
@@ -174,6 +208,240 @@
       "label": "Bucket policy",
       "hint": "Bucket policy document (JSON). Apply empty to remove the policy.",
       "fillExample": "Fill example"
+    }
+  },
+  "ec2": {
+    "heading": "Instances",
+    "subtitle": "EC2",
+    "none": "No instances",
+    "actionRequested": "{{action}} requested",
+    "terminateTitle": "Terminate instance",
+    "terminateConfirm": "Terminate instance \"{{id}}\"? This cannot be undone.",
+    "launch": {
+      "button": "Launch instance",
+      "title": "Launch instance",
+      "name": "Name (optional)",
+      "ami": "AMI ID",
+      "amiHint": "LocalStack accepts any mock AMI id (ami-...).",
+      "instanceType": "Instance type",
+      "count": "Count",
+      "advanced": "Advanced options",
+      "keyName": "Key pair name",
+      "securityGroups": "Security group IDs",
+      "securityGroupsHint": "Comma-separated. Leave empty to use the default group.",
+      "subnet": "Subnet ID",
+      "submit": "Launch",
+      "created": "Instance launch requested"
+    },
+    "action": {
+      "start": "Start",
+      "stop": "Stop",
+      "reboot": "Reboot",
+      "terminate": "Terminate"
+    },
+    "col": {
+      "name": "Name",
+      "instanceId": "Instance ID",
+      "state": "State",
+      "type": "Type",
+      "az": "Availability zone",
+      "publicIp": "Public IP",
+      "privateIp": "Private IP",
+      "launched": "Launched"
+    },
+    "tabs": {
+      "details": "Details",
+      "security": "Security",
+      "networking": "Networking",
+      "storage": "Storage",
+      "tags": "Tags"
+    },
+    "detail": {
+      "instanceType": "Instance type",
+      "ami": "AMI ID",
+      "keyName": "Key pair",
+      "launchTime": "Launch time",
+      "az": "Availability zone",
+      "monitoring": "Monitoring",
+      "architecture": "Architecture",
+      "platform": "Platform",
+      "rootDevice": "Root device",
+      "iamRole": "IAM instance profile",
+      "vpc": "VPC ID",
+      "subnet": "Subnet ID",
+      "publicIp": "Public IPv4",
+      "publicDns": "Public DNS",
+      "privateIp": "Private IPv4",
+      "privateDns": "Private DNS"
+    },
+    "security": {
+      "group": "Security group",
+      "description": "Description",
+      "inbound": "Inbound rules",
+      "outbound": "Outbound rules",
+      "protocol": "Protocol",
+      "ports": "Ports",
+      "source": "Source / destination",
+      "allTraffic": "All",
+      "allPorts": "All",
+      "noRules": "No rules",
+      "none": "No security groups"
+    },
+    "networking": {
+      "interfaces": "Network interfaces",
+      "eni": "Interface ID",
+      "status": "Status",
+      "mac": "MAC address",
+      "none": "No network interfaces"
+    },
+    "storage": {
+      "volumeId": "Volume ID",
+      "device": "Device",
+      "size": "Size",
+      "type": "Type",
+      "iops": "IOPS",
+      "throughput": "Throughput",
+      "encrypted": "Encrypted",
+      "state": "State",
+      "deleteOnTermination": "Delete on termination",
+      "none": "No volumes"
+    },
+    "tags": {
+      "none": "No tags"
+    }
+  },
+  "alb": {
+    "heading": "Load balancers",
+    "subtitle": "ELBv2",
+    "none": "No load balancers",
+    "listeners": "Listeners & rules",
+    "defaultAction": "default",
+    "noRules": "No rules",
+    "noListeners": "No listeners",
+    "priority": "Priority",
+    "conditions": "Conditions",
+    "actions": "Actions",
+    "col": {
+      "name": "Name",
+      "type": "Type",
+      "scheme": "Scheme",
+      "state": "State",
+      "dns": "DNS name",
+      "vpc": "VPC ID",
+      "created": "Created"
+    }
+  },
+  "tg": {
+    "heading": "Target groups",
+    "subtitle": "ELBv2",
+    "none": "No target groups",
+    "targets": "Registered targets",
+    "noTargets": "No registered targets",
+    "col": {
+      "name": "Name",
+      "protocol": "Protocol",
+      "targetType": "Target type",
+      "vpc": "VPC ID",
+      "healthCheck": "Health check",
+      "loadBalancers": "Load balancers"
+    },
+    "health": {
+      "target": "Target",
+      "port": "Port",
+      "state": "Health",
+      "reason": "Reason"
+    }
+  },
+  "asg": {
+    "heading": "Auto Scaling groups",
+    "subtitle": "Auto Scaling",
+    "none": "No Auto Scaling groups",
+    "capacityFmt": "{{min}} / {{desired}} / {{max}}",
+    "noInstances": "No instances",
+    "noPolicies": "No scaling policies",
+    "noScheduled": "No scheduled actions",
+    "col": {
+      "name": "Name",
+      "capacity": "Min / Desired / Max",
+      "instances": "Instances",
+      "healthCheck": "Health check",
+      "launchTemplate": "Launch template",
+      "azs": "Availability zones"
+    },
+    "section": {
+      "instances": "Instances",
+      "policies": "Scaling policies",
+      "scheduled": "Scheduled actions"
+    },
+    "inst": {
+      "id": "Instance ID",
+      "lifecycle": "Lifecycle",
+      "health": "Health",
+      "az": "Availability zone"
+    },
+    "pol": {
+      "name": "Name",
+      "type": "Type",
+      "metric": "Metric",
+      "target": "Target value"
+    },
+    "sched": {
+      "name": "Name",
+      "recurrence": "Recurrence",
+      "capacity": "Min / Desired / Max",
+      "start": "Start time"
+    }
+  },
+  "lt": {
+    "heading": "Launch templates",
+    "subtitle": "EC2",
+    "none": "No launch templates",
+    "defaultVersion": "Default v{{n}}",
+    "col": {
+      "name": "Name",
+      "id": "Template ID",
+      "default": "Default version",
+      "latest": "Latest version",
+      "created": "Created"
+    },
+    "field": {
+      "ami": "AMI ID",
+      "instanceType": "Instance type",
+      "keyName": "Key pair",
+      "securityGroups": "Security groups",
+      "iamRole": "IAM instance profile",
+      "imdsv2": "IMDSv2 (metadata)",
+      "userData": "User data",
+      "blockDevices": "Block devices"
+    }
+  },
+  "volume": {
+    "heading": "Volumes",
+    "subtitle": "EBS",
+    "none": "No volumes",
+    "col": {
+      "id": "Volume ID",
+      "size": "Size",
+      "type": "Type",
+      "iops": "IOPS",
+      "state": "State",
+      "encrypted": "Encrypted",
+      "az": "Availability zone",
+      "attachedTo": "Attached to",
+      "created": "Created"
+    }
+  },
+  "sg": {
+    "heading": "Security groups",
+    "subtitle": "EC2 / VPC",
+    "none": "No security groups",
+    "ruleCount": "{{in}} in / {{out}} out",
+    "col": {
+      "name": "Name",
+      "id": "Group ID",
+      "vpc": "VPC ID",
+      "description": "Description",
+      "rules": "Rules"
     }
   },
   "error": {

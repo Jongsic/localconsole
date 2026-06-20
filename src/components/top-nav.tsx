@@ -9,10 +9,11 @@ import { ConnectionDialog } from "./connection-dialog";
 import { LanguageSwitch } from "./language-switch";
 
 const TABS = [
-  { href: "/s3", label: "S3", requiresFull: false },
-  { href: "/ec2", label: "EC2", requiresFull: true },
-  { href: "/alb", label: "ALB", requiresFull: true },
-  { href: "/asg", label: "ASG", requiresFull: true },
+  { href: "/s3", label: "S3", requiresFull: false, comingSoon: false },
+  { href: "/compute", label: "Compute", requiresFull: true, comingSoon: false },
+  { href: "/vpc", label: "VPC", requiresFull: true, comingSoon: true },
+  { href: "/db", label: "DB/Cache", requiresFull: true, comingSoon: true },
+  { href: "/function", label: "Function", requiresFull: true, comingSoon: true },
 ];
 
 export function TopNav() {
@@ -54,7 +55,7 @@ export function TopNav() {
               )}
             >
               {tab.label}
-              {tab.requiresFull && (
+              {tab.comingSoon && (
                 <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] text-slate-400">
                   {t("nav.comingSoon")}
                 </span>

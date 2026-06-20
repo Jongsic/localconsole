@@ -21,12 +21,46 @@
     "language": "언어",
     "learnMore": "자세히 보기",
     "open": "열기",
-    "details": "속성"
+    "details": "속성",
+    "yes": "예",
+    "no": "아니요"
   },
   "nav": {
     "comingSoon": "준비중",
     "comingSoonBody": "{{service}} 메뉴는 곧 추가될 예정입니다.",
     "disabledForBackend": "감지된 백엔드({{backend}})에서는 사용할 수 없습니다."
+  },
+  "compute": {
+    "section": "Compute",
+    "instances": "인스턴스",
+    "securityGroups": "보안 그룹",
+    "volumes": "볼륨",
+    "launchTemplates": "시작 템플릿",
+    "loadBalancers": "로드 밸런서",
+    "targetGroups": "대상 그룹",
+    "asg": "Auto Scaling 그룹"
+  },
+  "vpc": {
+    "section": "VPC",
+    "vpcs": "VPC 목록",
+    "subnets": "서브넷",
+    "routeTables": "라우팅 테이블",
+    "internetGateways": "인터넷 게이트웨이",
+    "natGateways": "NAT 게이트웨이"
+  },
+  "dbcache": {
+    "section": "DB / Cache",
+    "rds": "RDS",
+    "cache": "ElastiCache",
+    "dbClusters": "DB 클러스터",
+    "dbInstances": "DB 인스턴스",
+    "cacheClusters": "캐시 클러스터",
+    "cacheNodes": "캐시 노드"
+  },
+  "function": {
+    "section": "Function",
+    "functions": "함수",
+    "layers": "레이어"
   },
   "setup": {
     "title": "백엔드에 연결",
@@ -174,6 +208,240 @@
       "label": "버킷 정책",
       "hint": "버킷 정책 문서(JSON). 비우고 적용하면 정책이 삭제됩니다.",
       "fillExample": "예시 채우기"
+    }
+  },
+  "ec2": {
+    "heading": "인스턴스",
+    "subtitle": "EC2",
+    "none": "인스턴스가 없습니다",
+    "actionRequested": "{{action}} 요청됨",
+    "terminateTitle": "인스턴스 종료",
+    "terminateConfirm": "인스턴스 \"{{id}}\"를 종료할까요? 되돌릴 수 없습니다.",
+    "launch": {
+      "button": "인스턴스 시작",
+      "title": "인스턴스 시작",
+      "name": "이름 (선택)",
+      "ami": "AMI ID",
+      "amiHint": "LocalStack은 임의의 mock AMI id(ami-...)를 허용합니다.",
+      "instanceType": "인스턴스 유형",
+      "count": "개수",
+      "advanced": "고급 옵션",
+      "keyName": "키 페어 이름",
+      "securityGroups": "보안 그룹 ID",
+      "securityGroupsHint": "쉼표로 구분. 비우면 기본 그룹을 사용합니다.",
+      "subnet": "서브넷 ID",
+      "submit": "시작",
+      "created": "인스턴스 시작 요청됨"
+    },
+    "action": {
+      "start": "시작",
+      "stop": "중지",
+      "reboot": "재부팅",
+      "terminate": "종료"
+    },
+    "col": {
+      "name": "이름",
+      "instanceId": "인스턴스 ID",
+      "state": "상태",
+      "type": "유형",
+      "az": "가용 영역",
+      "publicIp": "퍼블릭 IP",
+      "privateIp": "프라이빗 IP",
+      "launched": "시작 시각"
+    },
+    "tabs": {
+      "details": "세부 정보",
+      "security": "보안",
+      "networking": "네트워킹",
+      "storage": "스토리지",
+      "tags": "태그"
+    },
+    "detail": {
+      "instanceType": "인스턴스 유형",
+      "ami": "AMI ID",
+      "keyName": "키 페어",
+      "launchTime": "시작 시각",
+      "az": "가용 영역",
+      "monitoring": "모니터링",
+      "architecture": "아키텍처",
+      "platform": "플랫폼",
+      "rootDevice": "루트 디바이스",
+      "iamRole": "IAM 인스턴스 프로파일",
+      "vpc": "VPC ID",
+      "subnet": "서브넷 ID",
+      "publicIp": "퍼블릭 IPv4",
+      "publicDns": "퍼블릭 DNS",
+      "privateIp": "프라이빗 IPv4",
+      "privateDns": "프라이빗 DNS"
+    },
+    "security": {
+      "group": "보안 그룹",
+      "description": "설명",
+      "inbound": "인바운드 규칙",
+      "outbound": "아웃바운드 규칙",
+      "protocol": "프로토콜",
+      "ports": "포트",
+      "source": "소스 / 대상",
+      "allTraffic": "전체",
+      "allPorts": "전체",
+      "noRules": "규칙 없음",
+      "none": "보안 그룹 없음"
+    },
+    "networking": {
+      "interfaces": "네트워크 인터페이스",
+      "eni": "인터페이스 ID",
+      "status": "상태",
+      "mac": "MAC 주소",
+      "none": "네트워크 인터페이스 없음"
+    },
+    "storage": {
+      "volumeId": "볼륨 ID",
+      "device": "디바이스",
+      "size": "크기",
+      "type": "유형",
+      "iops": "IOPS",
+      "throughput": "처리량",
+      "encrypted": "암호화",
+      "state": "상태",
+      "deleteOnTermination": "종료 시 삭제",
+      "none": "볼륨 없음"
+    },
+    "tags": {
+      "none": "태그 없음"
+    }
+  },
+  "alb": {
+    "heading": "로드 밸런서",
+    "subtitle": "ELBv2",
+    "none": "로드 밸런서가 없습니다",
+    "listeners": "리스너 & 규칙",
+    "defaultAction": "기본",
+    "noRules": "규칙 없음",
+    "noListeners": "리스너 없음",
+    "priority": "우선순위",
+    "conditions": "조건",
+    "actions": "액션",
+    "col": {
+      "name": "이름",
+      "type": "유형",
+      "scheme": "스킴",
+      "state": "상태",
+      "dns": "DNS 이름",
+      "vpc": "VPC ID",
+      "created": "생성 시각"
+    }
+  },
+  "tg": {
+    "heading": "대상 그룹",
+    "subtitle": "ELBv2",
+    "none": "대상 그룹이 없습니다",
+    "targets": "등록된 대상",
+    "noTargets": "등록된 대상이 없습니다",
+    "col": {
+      "name": "이름",
+      "protocol": "프로토콜",
+      "targetType": "대상 유형",
+      "vpc": "VPC ID",
+      "healthCheck": "헬스 체크",
+      "loadBalancers": "로드 밸런서"
+    },
+    "health": {
+      "target": "대상",
+      "port": "포트",
+      "state": "상태",
+      "reason": "사유"
+    }
+  },
+  "asg": {
+    "heading": "Auto Scaling 그룹",
+    "subtitle": "Auto Scaling",
+    "none": "Auto Scaling 그룹이 없습니다",
+    "capacityFmt": "{{min}} / {{desired}} / {{max}}",
+    "noInstances": "인스턴스 없음",
+    "noPolicies": "스케일링 정책 없음",
+    "noScheduled": "예약 작업 없음",
+    "col": {
+      "name": "이름",
+      "capacity": "최소 / 목표 / 최대",
+      "instances": "인스턴스",
+      "healthCheck": "헬스 체크",
+      "launchTemplate": "시작 템플릿",
+      "azs": "가용 영역"
+    },
+    "section": {
+      "instances": "인스턴스",
+      "policies": "스케일링 정책",
+      "scheduled": "예약 작업"
+    },
+    "inst": {
+      "id": "인스턴스 ID",
+      "lifecycle": "라이프사이클",
+      "health": "헬스",
+      "az": "가용 영역"
+    },
+    "pol": {
+      "name": "이름",
+      "type": "유형",
+      "metric": "지표",
+      "target": "목표값"
+    },
+    "sched": {
+      "name": "이름",
+      "recurrence": "반복",
+      "capacity": "최소 / 목표 / 최대",
+      "start": "시작 시각"
+    }
+  },
+  "lt": {
+    "heading": "시작 템플릿",
+    "subtitle": "EC2",
+    "none": "시작 템플릿이 없습니다",
+    "defaultVersion": "기본 v{{n}}",
+    "col": {
+      "name": "이름",
+      "id": "템플릿 ID",
+      "default": "기본 버전",
+      "latest": "최신 버전",
+      "created": "생성 시각"
+    },
+    "field": {
+      "ami": "AMI ID",
+      "instanceType": "인스턴스 유형",
+      "keyName": "키 페어",
+      "securityGroups": "보안 그룹",
+      "iamRole": "IAM 인스턴스 프로파일",
+      "imdsv2": "IMDSv2 (메타데이터)",
+      "userData": "User data",
+      "blockDevices": "블록 디바이스"
+    }
+  },
+  "volume": {
+    "heading": "볼륨",
+    "subtitle": "EBS",
+    "none": "볼륨이 없습니다",
+    "col": {
+      "id": "볼륨 ID",
+      "size": "크기",
+      "type": "유형",
+      "iops": "IOPS",
+      "state": "상태",
+      "encrypted": "암호화",
+      "az": "가용 영역",
+      "attachedTo": "연결 대상",
+      "created": "생성 시각"
+    }
+  },
+  "sg": {
+    "heading": "보안 그룹",
+    "subtitle": "EC2 / VPC",
+    "none": "보안 그룹이 없습니다",
+    "ruleCount": "인바운드 {{in}} / 아웃바운드 {{out}}",
+    "col": {
+      "name": "이름",
+      "id": "그룹 ID",
+      "vpc": "VPC ID",
+      "description": "설명",
+      "rules": "규칙"
     }
   },
   "error": {
