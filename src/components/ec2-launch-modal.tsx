@@ -1,8 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/ec2-api";
 import type { Ec2LaunchInput } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useToast } from "./toast";
 import { Button, Field, Modal, TextInput } from "./ui";
 
@@ -27,8 +28,22 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
   const [count, setCount] = useState(1);
   const [advanced, setAdvanced] = useState(false);
   const [keyName, setKeyName] = useState("");
-  const [securityGroups, setSecurityGroups] = useState("");
+  const [securityGroupIds, setSecurityGroupIds] = useState<string[]>([]);
   const [subnetId, setSubnetId] = useState("");
+
+  // Live pickers — loaded only while the dialog is open.
+  const keyPairs = useQuery({ queryKey: ["key-pairs"], queryFn: api.listKeyPairs, enabled: open });
+  const sgs = useQuery({
+    queryKey: ["security-groups"],
+    queryFn: api.listSecurityGroups,
+    enabled: open,
+  });
+  const subnets = useQuery({ queryKey: ["subnets"], queryFn: api.listSubnets, enabled: open });
+
+  const toggleSg = (id: string) =>
+    setSecurityGroupIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
 
   const launch = useMutation({
     mutationFn: () => {
@@ -38,10 +53,7 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
         count,
         name: name.trim() || undefined,
         keyName: keyName.trim() || undefined,
-        securityGroupIds: securityGroups
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        securityGroupIds,
         subnetId: subnetId.trim() || undefined,
       };
       return api.launchInstances(input);
@@ -108,22 +120,65 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
         {advanced && (
           <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
             <Field label={t("ec2.launch.keyName")}>
-              <TextInput value={keyName} onChange={(e) => setKeyName(e.target.value)} />
+              <select
+                value={keyName}
+                onChange={(e) => setKeyName(e.target.value)}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand"
+              >
+                <option value="">{t("ec2.launch.none")}</option>
+                {(keyPairs.data ?? []).map((k) => (
+                  <option key={k.keyName} value={k.keyName}>
+                    {k.keyName}
+                  </option>
+                ))}
+              </select>
             </Field>
+
             <Field label={t("ec2.launch.securityGroups")}>
-              <TextInput
-                value={securityGroups}
-                onChange={(e) => setSecurityGroups(e.target.value)}
-                placeholder="sg-123, sg-456"
-              />
+              <div className="max-h-32 overflow-auto rounded-md border border-slate-300 bg-white p-1.5">
+                {(sgs.data ?? []).length === 0 ? (
+                  <p className="px-1 py-1 text-xs text-slate-400">
+                    {t("ec2.launch.noSecurityGroups")}
+                  </p>
+                ) : (
+                  (sgs.data ?? []).map((g) => (
+                    <label
+                      key={g.groupId}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-slate-50",
+                        securityGroupIds.includes(g.groupId) && "bg-brand-fg",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={securityGroupIds.includes(g.groupId)}
+                        onChange={() => toggleSg(g.groupId)}
+                      />
+                      <span className="font-medium text-slate-700">{g.groupName}</span>
+                      <span className="font-mono text-slate-400">{g.groupId}</span>
+                    </label>
+                  ))
+                )}
+              </div>
               <span className="text-xs text-slate-400">{t("ec2.launch.securityGroupsHint")}</span>
             </Field>
+
             <Field label={t("ec2.launch.subnet")}>
-              <TextInput
+              <select
                 value={subnetId}
                 onChange={(e) => setSubnetId(e.target.value)}
-                placeholder="subnet-123"
-              />
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand"
+              >
+                <option value="">{t("ec2.launch.defaultSubnet")}</option>
+                {(subnets.data ?? []).map((s) => (
+                  <option key={s.subnetId} value={s.subnetId}>
+                    {s.subnetId}
+                    {s.name ? ` (${s.name})` : ""}
+                    {s.availabilityZone ? ` — ${s.availabilityZone}` : ""}
+                    {s.cidrBlock ? ` ${s.cidrBlock}` : ""}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
         )}

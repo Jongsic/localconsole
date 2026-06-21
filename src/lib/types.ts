@@ -24,7 +24,10 @@ export const DEFAULT_SETTINGS: ConnectionSettings = {
   websiteHost: "s3-website.localhost.localstack.cloud:4566",
 };
 
-export type BackendKind = "localstack" | "minio" | "aws" | "unknown" | "none";
+export type BackendKind = "localstack" | "floci" | "minio" | "moto" | "aws" | "unknown" | "none";
+
+/** Top-level navigation sections, gated per backend (see config/backends.json) */
+export type Section = "s3" | "compute" | "vpc" | "db" | "function";
 
 /* ── S3 domain types ── */
 
@@ -153,6 +156,9 @@ export type Ec2InstanceDetail = {
   rootDeviceType: string | null;
   monitoring: string | null;
   iamInstanceProfileArn: string | null;
+  /** IMDSv2 enforcement: HttpTokens (required/optional) */
+  metadataHttpTokens: string | null;
+  metadataHopLimit: number | null;
   publicIp: string | null;
   publicDns: string | null;
   privateIp: string | null;
@@ -178,6 +184,23 @@ export type Ec2SecurityGroup = {
   vpcId: string | null;
   inbound: Ec2SgRule[];
   outbound: Ec2SgRule[];
+};
+
+/** Input for adding/removing a security-group rule */
+export type SgRuleInput = {
+  direction: "ingress" | "egress";
+  /** "-1" = all protocols */
+  protocol: string;
+  fromPort: number | null;
+  toPort: number | null;
+  /** CIDR (e.g. 0.0.0.0/0) */
+  cidr: string;
+};
+
+export type CreateSecurityGroupInput = {
+  groupName: string;
+  description: string;
+  vpcId?: string;
 };
 
 export type Ec2Volume = {
@@ -212,6 +235,23 @@ export type Ec2VolumeSummary = {
 /** Instance lifecycle action triggered from the UI */
 export type Ec2InstanceAction = "start" | "stop" | "reboot" | "terminate";
 
+export type Ec2KeyPairSummary = {
+  keyPairId: string;
+  keyName: string;
+  keyType: string | null;
+  fingerprint: string | null;
+  createTime: string | null;
+};
+
+export type Ec2SubnetSummary = {
+  subnetId: string;
+  vpcId: string | null;
+  cidrBlock: string | null;
+  availabilityZone: string | null;
+  availableIpCount: number | null;
+  name: string | null;
+};
+
 /* ── ELBv2 (ALB/NLB) domain types ── */
 
 export type AlbSummary = {
@@ -226,11 +266,30 @@ export type AlbSummary = {
   createdTime: string | null;
 };
 
+/** Editable load-balancer attributes (Describe/ModifyLoadBalancerAttributes) */
+export type AlbAttributes = {
+  idleTimeoutSeconds: number;
+  deletionProtection: boolean;
+  http2Enabled: boolean;
+};
+
 export type AlbRuleSummary = {
+  arn: string;
+  isDefault: boolean;
   /** "default" or a numeric priority string */
   priority: string;
   conditions: string[];
   actions: string[];
+};
+
+export type CreateRuleInput = {
+  listenerArn: string;
+  priority: number;
+  /** path-pattern | host-header */
+  conditionField: "path-pattern" | "host-header";
+  /** comma-separated values, e.g. "/api/*" or "api.example.com" */
+  values: string;
+  targetGroupArn: string;
 };
 
 export type AlbListenerDetail = {
@@ -250,7 +309,35 @@ export type TargetGroupSummary = {
   vpcId: string | null;
   healthCheckPath: string | null;
   healthCheckProtocol: string | null;
+  healthCheckIntervalSeconds: number | null;
+  healthCheckTimeoutSeconds: number | null;
+  healthyThreshold: number | null;
+  unhealthyThreshold: number | null;
+  /** Success matcher HTTP codes (e.g. "200" or "200-299") */
+  matcherHttpCode: string | null;
   loadBalancerArns: string[];
+};
+
+/** Editable health-check config (ModifyTargetGroup) */
+export type TgHealthCheckInput = {
+  path: string;
+  intervalSeconds: number;
+  timeoutSeconds: number;
+  healthyThreshold: number;
+  unhealthyThreshold: number;
+  /** Success codes, e.g. "200" or "200,302" */
+  matcherHttpCode: string;
+};
+
+/** Editable target-group attributes (DescribeTargetGroupAttributes key/values) */
+export type TargetGroupAttributes = {
+  stickinessEnabled: boolean;
+  /** lb_cookie | app_cookie | source_ip */
+  stickinessType: string;
+  stickinessDurationSeconds: number;
+  deregistrationDelaySeconds: number;
+  /** round_robin | least_outstanding_requests */
+  loadBalancingAlgorithm: string;
 };
 
 export type TargetHealthEntry = {
@@ -259,6 +346,35 @@ export type TargetHealthEntry = {
   state: string | null;
   reason: string | null;
   description: string | null;
+};
+
+export type CreateTargetGroupInput = {
+  name: string;
+  protocol: string;
+  port: number;
+  targetType: "instance" | "ip";
+  vpcId?: string;
+  healthCheckPath?: string;
+};
+
+export type CreateAlbInput = {
+  name: string;
+  scheme: "internet-facing" | "internal";
+  type: "application" | "network";
+  subnetIds: string[];
+  securityGroupIds: string[];
+};
+
+/** A listener's default action: forward to a target group, or return a fixed response. */
+export type ListenerDefaultAction =
+  | { type: "forward"; targetGroupArn: string }
+  | { type: "fixed-response"; statusCode: string; contentType: string; body: string };
+
+export type CreateListenerInput = {
+  loadBalancerArn: string;
+  protocol: string;
+  port: number;
+  action: ListenerDefaultAction;
 };
 
 /* ── Auto Scaling domain types ── */
@@ -304,6 +420,23 @@ export type AsgDetail = AsgSummary & {
   instances: AsgInstance[];
   policies: AsgPolicy[];
   scheduledActions: AsgScheduledAction[];
+};
+
+export type CreateAsgInput = {
+  name: string;
+  launchTemplateId: string;
+  minSize: number;
+  maxSize: number;
+  desiredCapacity: number;
+  /** Subnet IDs (VPCZoneIdentifier) */
+  subnetIds: string[];
+  targetGroupArns: string[];
+};
+
+export type AsgCapacityInput = {
+  minSize: number;
+  maxSize: number;
+  desiredCapacity: number;
 };
 
 /* ── Launch templates ── */

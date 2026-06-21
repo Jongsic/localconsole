@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LayoutTemplate, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ResizableBottomPanel } from "@/components/resizable-bottom-panel";
+import { ResourceError } from "@/components/resource-error";
 import { Spinner } from "@/components/ui";
 import { api } from "@/lib/ec2-api";
 import type { Ec2LaunchTemplateSummary } from "@/lib/types";
@@ -39,9 +41,7 @@ export function LaunchTemplatesPage() {
             <Spinner />
           </div>
         ) : templates.isError ? (
-          <div className="px-4 py-12 text-center text-sm text-red-600">
-            {(templates.error as Error).message}
-          </div>
+          <ResourceError error={templates.error} service="EC2 launch templates" />
         ) : templates.data && templates.data.length > 0 ? (
           <table className="w-full text-left text-sm">
             <thead className="sticky top-0 bg-slate-50 text-[11px] uppercase text-slate-400">
@@ -114,7 +114,7 @@ function TemplateDetail({
   });
 
   return (
-    <div className="flex h-72 shrink-0 flex-col border-t bg-white">
+    <ResizableBottomPanel storageKey="oc_panel_h_lt">
       <div className="flex items-center gap-2 border-b px-4 py-2">
         <span className="text-sm font-medium text-slate-700">{name}</span>
         <span className="font-mono text-xs text-slate-500">{launchTemplateId}</span>
@@ -186,7 +186,7 @@ function TemplateDetail({
           </div>
         ) : null}
       </div>
-    </div>
+    </ResizableBottomPanel>
   );
 }
 

@@ -1,4 +1,5 @@
 import { ListBucketsCommand } from "@aws-sdk/client-s3";
+import { type BackendDetect, detectableBackends } from "./backends";
 import { clientFromSettings } from "./s3-client";
 import type { BackendKind, ConnectionSettings } from "./types";
 
@@ -19,21 +20,16 @@ function base(endpoint: string): string {
   return endpoint.trim().replace(/\/$/, "");
 }
 
-async function isLocalStack(ep: string): Promise<boolean> {
+/** Probe one backend's health path; honors an optional required JSON key. */
+async function matchesDetect(ep: string, detect: BackendDetect): Promise<boolean> {
   try {
-    const r = await fetch(`${ep}/_localstack/health`, { method: "GET" });
+    const r = await fetch(`${ep}${detect.healthPath}`, { method: "GET" });
     if (!r.ok) return false;
-    const j = await r.json();
-    return !!(j && typeof j === "object" && "services" in j);
-  } catch {
-    return false;
-  }
-}
-
-async function isMinio(ep: string): Promise<boolean> {
-  try {
-    const r = await fetch(`${ep}/minio/health/live`, { method: "GET" });
-    return r.ok;
+    if (detect.jsonKey) {
+      const j = await r.json().catch(() => null);
+      return !!(j && typeof j === "object" && detect.jsonKey in j);
+    }
+    return true;
   } catch {
     return false;
   }
@@ -79,11 +75,17 @@ async function probeListBuckets(s: ConnectionSettings): Promise<ProbeResult> {
 export async function detectBackend(s: ConnectionSettings): Promise<DetectResult> {
   const ep = base(s.endpoint);
 
-  let backend: BackendKind;
-  if (!ep || /amazonaws\.com/i.test(ep)) backend = "aws";
-  else if (await isLocalStack(ep)) backend = "localstack";
-  else if (await isMinio(ep)) backend = "minio";
-  else backend = "unknown";
+  let backend: BackendKind = "unknown";
+  if (!ep || /amazonaws\.com/i.test(ep)) {
+    backend = "aws";
+  } else {
+    for (const { backend: kind, detect } of detectableBackends()) {
+      if (await matchesDetect(ep, detect)) {
+        backend = kind;
+        break;
+      }
+    }
+  }
 
   const probe = await probeListBuckets(s);
   if (probe.ok) {
@@ -98,11 +100,6 @@ export async function detectBackend(s: ConnectionSettings): Promise<DetectResult
   };
 }
 
-/** Per-backend feature gating: whether non-S3 service tabs are enabled */
-export function isFullFeatured(backend: BackendKind): boolean {
-  return backend === "localstack";
-}
-
 /* ── Candidate discovery ── */
 
 export type Candidate = {
@@ -115,57 +112,66 @@ export type Candidate = {
   >;
 };
 
-const CANDIDATE_DEFS: Array<{
-  backend: BackendKind;
-  endpoint: string;
-  probe: string;
-  defaults: Candidate["defaults"];
-}> = [
-  {
-    backend: "localstack",
-    endpoint: "http://localhost:4566",
-    probe: "/_localstack/health",
-    defaults: {
-      endpoint: "http://localhost:4566",
-      region: "us-east-1",
-      forcePathStyle: true,
-      accessKeyId: "test",
-      secretAccessKey: "test",
-      websiteHost: "s3-website.localhost.localstack.cloud:4566",
-    },
+/** Form-fill defaults (creds / website host) per backend; endpoint is derived from the probed port. */
+type CandidateDefaults = Omit<Candidate["defaults"], "endpoint">;
+
+const CANDIDATE_DEFAULTS: Partial<Record<BackendKind, CandidateDefaults>> = {
+  floci: {
+    region: "us-east-1",
+    forcePathStyle: true,
+    accessKeyId: "test",
+    secretAccessKey: "test",
+    websiteHost: "",
   },
-  {
-    backend: "minio",
-    endpoint: "http://localhost:9000",
-    probe: "/minio/health/live",
-    defaults: {
-      endpoint: "http://localhost:9000",
-      region: "us-east-1",
-      forcePathStyle: true,
-      accessKeyId: "minioadmin",
-      secretAccessKey: "minioadmin",
-      websiteHost: "",
-    },
+  localstack: {
+    region: "us-east-1",
+    forcePathStyle: true,
+    accessKeyId: "test",
+    secretAccessKey: "test",
+    websiteHost: "s3-website.localhost.localstack.cloud:4566",
   },
-];
+  moto: {
+    region: "us-east-1",
+    forcePathStyle: true,
+    accessKeyId: "testing",
+    secretAccessKey: "testing",
+    websiteHost: "",
+  },
+  minio: {
+    region: "us-east-1",
+    forcePathStyle: true,
+    accessKeyId: "minioadmin",
+    secretAccessKey: "minioadmin",
+    websiteHost: "",
+  },
+};
 
 /**
- * Probe well-known local endpoints and collect the ones that respond.
+ * Probe the registry's default local ports and collect the backends that respond.
+ * Backends are tried in registry order, so for a shared port (Floci & LocalStack both on 4566)
+ * the more specific match wins and each endpoint yields at most one candidate.
  * (Checks only health paths without credentials — finds CORS-allowed backends only.)
  */
 export async function discoverCandidates(): Promise<Candidate[]> {
+  const specs = detectableBackends();
+
+  // endpoint -> backends to try there, in registry order
+  const byEndpoint = new Map<string, typeof specs>();
+  for (const spec of specs) {
+    for (const port of spec.detect.ports) {
+      const ep = `http://localhost:${port}`;
+      byEndpoint.set(ep, [...(byEndpoint.get(ep) ?? []), spec]);
+    }
+  }
+
   const found: Candidate[] = [];
-  for (const def of CANDIDATE_DEFS) {
-    try {
-      const r = await fetch(def.endpoint + def.probe);
-      if (!r.ok) continue;
-      if (def.backend === "localstack") {
-        const j = await r.json().catch(() => null);
-        if (!j || typeof j !== "object" || !("services" in j)) continue;
+  for (const [endpoint, list] of byEndpoint) {
+    for (const { backend, detect } of list) {
+      if (await matchesDetect(endpoint, detect)) {
+        const defaults = CANDIDATE_DEFAULTS[backend];
+        if (defaults) found.push({ backend, endpoint, defaults: { ...defaults, endpoint } });
+        break; // first (most specific) match per endpoint
       }
-      found.push({ backend: def.backend, endpoint: def.endpoint, defaults: def.defaults });
-    } catch {
-      /* unreachable / CORS-blocked -> not a candidate */
     }
   }
   return found;

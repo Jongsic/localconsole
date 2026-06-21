@@ -39,7 +39,9 @@ function OriginCopy() {
 
 const BADGE: Record<BackendKind, string> = {
   localstack: "bg-violet-100 text-violet-700",
+  floci: "bg-fuchsia-100 text-fuchsia-700",
   minio: "bg-sky-100 text-sky-700",
+  moto: "bg-emerald-100 text-emerald-700",
   aws: "bg-amber-100 text-amber-700",
   unknown: "bg-slate-100 text-slate-600",
   none: "bg-slate-100 text-slate-500",
@@ -176,7 +178,10 @@ export function ConnectionDialog({
                       className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs hover:border-brand hover:bg-brand-fg"
                     >
                       <BackendBadge backend={c.backend} />
-                      <code className="text-slate-500">{c.endpoint}</code>
+                      {/* drop the redundant http://localhost prefix; the heading says "found locally" */}
+                      <code className="text-slate-500">
+                        {c.endpoint.replace(/^https?:\/\/localhost/, "") || c.endpoint}
+                      </code>
                     </button>
                   ))
                 )}

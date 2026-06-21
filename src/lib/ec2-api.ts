@@ -1,12 +1,27 @@
 import {
+  AuthorizeSecurityGroupEgressCommand,
+  AuthorizeSecurityGroupIngressCommand,
+  CreateKeyPairCommand,
+  CreateSecurityGroupCommand,
+  CreateTagsCommand,
+  DeleteKeyPairCommand,
+  DeleteSecurityGroupCommand,
+  DeleteTagsCommand,
+  DescribeInstanceAttributeCommand,
   DescribeInstancesCommand,
+  DescribeKeyPairsCommand,
   DescribeLaunchTemplatesCommand,
   DescribeLaunchTemplateVersionsCommand,
   DescribeSecurityGroupsCommand,
+  DescribeSubnetsCommand,
   DescribeVolumesCommand,
+  ImportKeyPairCommand,
   type Instance,
   type IpPermission,
+  ModifyInstanceAttributeCommand,
   RebootInstancesCommand,
+  RevokeSecurityGroupEgressCommand,
+  RevokeSecurityGroupIngressCommand,
   RunInstancesCommand,
   type RunInstancesCommandInput,
   type SecurityGroup,
@@ -16,18 +31,22 @@ import {
 } from "@aws-sdk/client-ec2";
 import { getEc2Client } from "./ec2-client";
 import type {
+  CreateSecurityGroupInput,
   Ec2InstanceAction,
   Ec2InstanceDetail,
   Ec2InstanceState,
   Ec2InstanceSummary,
+  Ec2KeyPairSummary,
   Ec2LaunchInput,
   Ec2LaunchTemplateSummary,
   Ec2LaunchTemplateVersionDetail,
   Ec2NetworkInterface,
   Ec2SecurityGroup,
   Ec2SgRule,
+  Ec2SubnetSummary,
   Ec2Volume,
   Ec2VolumeSummary,
+  SgRuleInput,
   Tag,
 } from "./types";
 
@@ -154,6 +173,8 @@ export const api = {
       rootDeviceType: i.RootDeviceType ?? null,
       monitoring: i.Monitoring?.State ?? null,
       iamInstanceProfileArn: i.IamInstanceProfile?.Arn ?? null,
+      metadataHttpTokens: i.MetadataOptions?.HttpTokens ?? null,
+      metadataHopLimit: i.MetadataOptions?.HttpPutResponseHopLimit ?? null,
       publicIp: i.PublicIpAddress ?? null,
       publicDns: i.PublicDnsName ?? null,
       privateIp: i.PrivateIpAddress ?? null,
@@ -167,6 +188,60 @@ export const api = {
   listSecurityGroups: async (): Promise<Ec2SecurityGroup[]> => {
     const out = await getEc2Client().send(new DescribeSecurityGroupsCommand({}));
     return (out.SecurityGroups ?? []).map(mapSecurityGroup);
+  },
+
+  createSecurityGroup: async (input: CreateSecurityGroupInput): Promise<void> => {
+    await getEc2Client().send(
+      new CreateSecurityGroupCommand({
+        GroupName: input.groupName,
+        Description: input.description || input.groupName,
+        ...(input.vpcId ? { VpcId: input.vpcId } : {}),
+      }),
+    );
+  },
+
+  deleteSecurityGroup: async (groupId: string): Promise<void> => {
+    await getEc2Client().send(new DeleteSecurityGroupCommand({ GroupId: groupId }));
+  },
+
+  authorizeRule: async (groupId: string, rule: SgRuleInput): Promise<void> => {
+    const permission: IpPermission = {
+      IpProtocol: rule.protocol,
+      ...(rule.protocol === "-1"
+        ? {}
+        : { FromPort: rule.fromPort ?? 0, ToPort: rule.toPort ?? rule.fromPort ?? 0 }),
+      IpRanges: [{ CidrIp: rule.cidr }],
+    };
+    const ec2 = getEc2Client();
+    if (rule.direction === "ingress") {
+      await ec2.send(
+        new AuthorizeSecurityGroupIngressCommand({ GroupId: groupId, IpPermissions: [permission] }),
+      );
+    } else {
+      await ec2.send(
+        new AuthorizeSecurityGroupEgressCommand({ GroupId: groupId, IpPermissions: [permission] }),
+      );
+    }
+  },
+
+  revokeRule: async (groupId: string, rule: SgRuleInput): Promise<void> => {
+    const permission: IpPermission = {
+      IpProtocol: rule.protocol,
+      ...(rule.protocol === "-1"
+        ? {}
+        : { FromPort: rule.fromPort ?? 0, ToPort: rule.toPort ?? rule.fromPort ?? 0 }),
+      IpRanges: [{ CidrIp: rule.cidr }],
+    };
+    const ec2 = getEc2Client();
+    if (rule.direction === "ingress") {
+      await ec2.send(
+        new RevokeSecurityGroupIngressCommand({ GroupId: groupId, IpPermissions: [permission] }),
+      );
+    } else {
+      await ec2.send(
+        new RevokeSecurityGroupEgressCommand({ GroupId: groupId, IpPermissions: [permission] }),
+      );
+    }
   },
 
   getSecurityGroups: async (groupIds: string[]): Promise<Ec2SecurityGroup[]> => {
@@ -263,6 +338,110 @@ export const api = {
     };
   },
 
+  /** Termination + stop protection flags (DescribeInstanceAttribute). */
+  getInstanceProtection: async (
+    instanceId: string,
+  ): Promise<{ terminationProtection: boolean; stopProtection: boolean }> => {
+    const ec2 = getEc2Client();
+    const [term, stop] = await Promise.all([
+      ec2.send(
+        new DescribeInstanceAttributeCommand({
+          InstanceId: instanceId,
+          Attribute: "disableApiTermination",
+        }),
+      ),
+      ec2.send(
+        new DescribeInstanceAttributeCommand({
+          InstanceId: instanceId,
+          Attribute: "disableApiStop",
+        }),
+      ),
+    ]);
+    return {
+      terminationProtection: term.DisableApiTermination?.Value ?? false,
+      stopProtection: stop.DisableApiStop?.Value ?? false,
+    };
+  },
+
+  setTerminationProtection: async (instanceId: string, enabled: boolean): Promise<void> => {
+    await getEc2Client().send(
+      new ModifyInstanceAttributeCommand({
+        InstanceId: instanceId,
+        DisableApiTermination: { Value: enabled },
+      }),
+    );
+  },
+
+  setStopProtection: async (instanceId: string, enabled: boolean): Promise<void> => {
+    await getEc2Client().send(
+      new ModifyInstanceAttributeCommand({
+        InstanceId: instanceId,
+        DisableApiStop: { Value: enabled },
+      }),
+    );
+  },
+
+  /** Instance user data, base64-decoded (empty string if none). */
+  getUserData: async (instanceId: string): Promise<string> => {
+    const out = await getEc2Client().send(
+      new DescribeInstanceAttributeCommand({ InstanceId: instanceId, Attribute: "userData" }),
+    );
+    const b64 = out.UserData?.Value;
+    if (!b64) return "";
+    try {
+      return atob(b64);
+    } catch {
+      return b64;
+    }
+  },
+
+  listKeyPairs: async (): Promise<Ec2KeyPairSummary[]> => {
+    const out = await getEc2Client().send(new DescribeKeyPairsCommand({}));
+    return (out.KeyPairs ?? []).map((k) => ({
+      keyPairId: k.KeyPairId ?? "",
+      keyName: k.KeyName ?? "",
+      keyType: k.KeyType ?? null,
+      fingerprint: k.KeyFingerprint ?? null,
+      createTime: k.CreateTime ? k.CreateTime.toISOString() : null,
+    }));
+  },
+
+  /** Create a key pair; returns the private key material (PEM) for the caller to download. */
+  createKeyPair: async (
+    keyName: string,
+    keyType: "rsa" | "ed25519",
+  ): Promise<{ keyName: string; keyMaterial: string }> => {
+    const out = await getEc2Client().send(
+      new CreateKeyPairCommand({ KeyName: keyName, KeyType: keyType }),
+    );
+    return { keyName: out.KeyName ?? keyName, keyMaterial: out.KeyMaterial ?? "" };
+  },
+
+  importKeyPair: async (keyName: string, publicKeyMaterial: string): Promise<void> => {
+    await getEc2Client().send(
+      new ImportKeyPairCommand({
+        KeyName: keyName,
+        PublicKeyMaterial: new TextEncoder().encode(publicKeyMaterial),
+      }),
+    );
+  },
+
+  deleteKeyPair: async (keyName: string): Promise<void> => {
+    await getEc2Client().send(new DeleteKeyPairCommand({ KeyName: keyName }));
+  },
+
+  listSubnets: async (): Promise<Ec2SubnetSummary[]> => {
+    const out = await getEc2Client().send(new DescribeSubnetsCommand({}));
+    return (out.Subnets ?? []).map((s) => ({
+      subnetId: s.SubnetId ?? "",
+      vpcId: s.VpcId ?? null,
+      cidrBlock: s.CidrBlock ?? null,
+      availabilityZone: s.AvailabilityZone ?? null,
+      availableIpCount: s.AvailableIpAddressCount ?? null,
+      name: s.Tags?.find((t) => t.Key === "Name")?.Value ?? null,
+    }));
+  },
+
   launchInstances: async (input: Ec2LaunchInput): Promise<void> => {
     const params: RunInstancesCommandInput = {
       ImageId: input.imageId,
@@ -281,6 +460,43 @@ export const api = {
         : {}),
     };
     await getEc2Client().send(new RunInstancesCommand(params));
+  },
+
+  /** Apply a desired tag set to a resource: upsert current tags, delete the removed keys. */
+  saveTags: async (resourceId: string, tags: Tag[], removedKeys: string[]): Promise<void> => {
+    const ec2 = getEc2Client();
+    if (removedKeys.length > 0) {
+      await ec2.send(
+        new DeleteTagsCommand({
+          Resources: [resourceId],
+          Tags: removedKeys.map((Key) => ({ Key })),
+        }),
+      );
+    }
+    const upserts = tags.filter((t) => t.key.trim() !== "");
+    if (upserts.length > 0) {
+      await ec2.send(
+        new CreateTagsCommand({
+          Resources: [resourceId],
+          Tags: upserts.map((t) => ({ Key: t.key, Value: t.value })),
+        }),
+      );
+    }
+  },
+
+  modifyInstanceType: async (instanceId: string, instanceType: string): Promise<void> => {
+    await getEc2Client().send(
+      new ModifyInstanceAttributeCommand({
+        InstanceId: instanceId,
+        InstanceType: { Value: instanceType },
+      }),
+    );
+  },
+
+  modifyInstanceSecurityGroups: async (instanceId: string, groupIds: string[]): Promise<void> => {
+    await getEc2Client().send(
+      new ModifyInstanceAttributeCommand({ InstanceId: instanceId, Groups: groupIds }),
+    );
   },
 
   runAction: async (action: Ec2InstanceAction, instanceId: string): Promise<void> => {

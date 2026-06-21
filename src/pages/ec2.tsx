@@ -1,14 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Plus, RefreshCw, RotateCw, Server, Square, Trash2 } from "lucide-react";
+import { Play, Plus, RefreshCw, RotateCw, Server, Square, Terminal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Ec2DetailPanel } from "@/components/ec2-instance-detail";
 import { Ec2LaunchModal } from "@/components/ec2-launch-modal";
+import { ResourceError } from "@/components/resource-error";
 import { useToast } from "@/components/toast";
 import { Button, Modal, Spinner } from "@/components/ui";
 import { api } from "@/lib/ec2-api";
 import type { Ec2InstanceAction, Ec2InstanceState, Ec2InstanceSummary } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
+import { useSettings } from "@/store/settings";
+
+/** States that are mid-transition and will change on their own → worth polling for. */
+export const TRANSITIONAL_STATES = new Set<Ec2InstanceState>([
+  "pending",
+  "stopping",
+  "shutting-down",
+]);
 
 const STATE_STYLES: Record<Ec2InstanceState, string> = {
   running: "bg-green-100 text-green-700",
@@ -36,11 +45,30 @@ export function Ec2Page() {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const toast = useToast();
+  const backend = useSettings((s) => s.backend);
   const [selected, setSelected] = useState<string | null>(null);
   const [terminateTarget, setTerminateTarget] = useState<string | null>(null);
   const [launchOpen, setLaunchOpen] = useState(false);
 
-  const instances = useQuery({ queryKey: ["ec2-instances"], queryFn: api.listInstances });
+  /** Floci backs each instance with a Docker container named floci-ec2-<id>. */
+  const copyExec = async (instanceId: string) => {
+    const cmd = `docker exec -it floci-ec2-${instanceId} sh`;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      toast.success(t("ec2.execCopied"));
+    } catch {
+      toast.error(cmd);
+    }
+  };
+
+  const instances = useQuery({
+    queryKey: ["ec2-instances"],
+    queryFn: api.listInstances,
+    // Poll while any instance is mid-transition (pending → running, stopping → stopped, …)
+    // so launch/start/stop results show up without a manual refresh; stop once all are stable.
+    refetchInterval: (q) =>
+      q.state.data?.some((i) => TRANSITIONAL_STATES.has(i.state)) ? 3000 : false,
+  });
   const current = instances.data?.find((i) => i.instanceId === selected) ?? null;
 
   const action = useMutation({
@@ -123,9 +151,7 @@ export function Ec2Page() {
             <Spinner />
           </div>
         ) : instances.isError ? (
-          <div className="px-4 py-12 text-center text-sm text-red-600">
-            {(instances.error as Error).message}
-          </div>
+          <ResourceError error={instances.error} service="EC2" />
         ) : instances.data && instances.data.length > 0 ? (
           <table className="w-full text-left text-sm">
             <thead className="sticky top-0 bg-slate-50 text-[11px] uppercase text-slate-400">
@@ -138,6 +164,7 @@ export function Ec2Page() {
                 <th className="px-4 py-2 font-medium">{t("ec2.col.publicIp")}</th>
                 <th className="px-4 py-2 font-medium">{t("ec2.col.privateIp")}</th>
                 <th className="px-4 py-2 font-medium">{t("ec2.col.launched")}</th>
+                {backend === "floci" && <th className="px-4 py-2" />}
               </tr>
             </thead>
             <tbody>
@@ -166,6 +193,23 @@ export function Ec2Page() {
                   <td className="px-4 py-2 text-xs text-slate-500">
                     {formatDate(i.launchTime, i18n.language)}
                   </td>
+                  {backend === "floci" && (
+                    <td className="px-4 py-2 text-right">
+                      {i.state === "running" && (
+                        <button
+                          type="button"
+                          title={t("ec2.execHint")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyExec(i.instanceId);
+                          }}
+                          className="inline-flex items-center gap-1 rounded border border-slate-200 px-1.5 py-1 text-[11px] text-slate-500 hover:border-brand hover:text-brand"
+                        >
+                          <Terminal className="h-3.5 w-3.5" /> {t("ec2.exec")}
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

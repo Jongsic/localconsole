@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { HardDrive, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ResourceError } from "@/components/resource-error";
 import { Spinner } from "@/components/ui";
 import { api } from "@/lib/ec2-api";
 import type { Ec2VolumeSummary } from "@/lib/types";
@@ -40,9 +41,7 @@ export function VolumesPage() {
             <Spinner />
           </div>
         ) : volumes.isError ? (
-          <div className="px-4 py-12 text-center text-sm text-red-600">
-            {(volumes.error as Error).message}
-          </div>
+          <ResourceError error={volumes.error} service="EBS" />
         ) : volumes.data && volumes.data.length > 0 ? (
           <table className="w-full text-left text-sm">
             <thead className="sticky top-0 bg-slate-50 text-[11px] uppercase text-slate-400">

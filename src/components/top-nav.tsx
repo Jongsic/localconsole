@@ -2,18 +2,19 @@ import { Boxes, Settings } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
-import { isFullFeatured } from "@/lib/detect";
+import { hasSection } from "@/lib/backends";
+import type { Section } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/store/settings";
 import { ConnectionDialog } from "./connection-dialog";
 import { LanguageSwitch } from "./language-switch";
 
-const TABS = [
-  { href: "/s3", label: "S3", requiresFull: false, comingSoon: false },
-  { href: "/compute", label: "Compute", requiresFull: true, comingSoon: false },
-  { href: "/vpc", label: "VPC", requiresFull: true, comingSoon: true },
-  { href: "/db", label: "DB/Cache", requiresFull: true, comingSoon: true },
-  { href: "/function", label: "Function", requiresFull: true, comingSoon: true },
+const TABS: { href: string; label: string; section: Section; comingSoon: boolean }[] = [
+  { href: "/s3", label: "S3", section: "s3", comingSoon: false },
+  { href: "/compute", label: "Compute", section: "compute", comingSoon: false },
+  { href: "/vpc", label: "VPC", section: "vpc", comingSoon: true },
+  { href: "/db", label: "DB/Cache", section: "db", comingSoon: true },
+  { href: "/function", label: "Function", section: "function", comingSoon: true },
 ];
 
 export function TopNav() {
@@ -21,7 +22,6 @@ export function TopNav() {
   const { pathname } = useLocation();
   const backend = useSettings((s) => s.backend);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const full = isFullFeatured(backend);
 
   return (
     <header className="flex items-center gap-4 border-b bg-white px-4">
@@ -33,7 +33,7 @@ export function TopNav() {
       <nav className="flex items-center gap-1">
         {TABS.map((tab) => {
           const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
-          const disabled = tab.requiresFull && !full;
+          const disabled = !hasSection(backend, tab.section);
           if (disabled) {
             return (
               <span

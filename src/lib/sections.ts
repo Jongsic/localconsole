@@ -4,6 +4,7 @@ import {
   Database,
   Globe,
   HardDrive,
+  KeyRound,
   Layers,
   LayoutTemplate,
   Network,
@@ -26,6 +27,7 @@ export const COMPUTE_ITEMS: SubNavItem[] = [
     comingSoon: false,
   },
   { path: "volumes", labelKey: "compute.volumes", icon: HardDrive, comingSoon: false },
+  { path: "key-pairs", labelKey: "compute.keyPairs", icon: KeyRound, comingSoon: false },
   {
     path: "launch-templates",
     labelKey: "compute.launchTemplates",

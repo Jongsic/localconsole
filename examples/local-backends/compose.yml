@@ -1,0 +1,82 @@
+# Local AWS-compatible backends for trying OpenConsole against.
+#
+# Each backend sits behind a Compose *profile*, so you start only what you need:
+#
+#   docker compose --profile floci      up -d
+#   docker compose --profile localstack up -d
+#   docker compose --profile minio      up -d
+#   docker compose --profile moto       up -d
+#
+# Host ports are overridable (defaults in parentheses). Handy when something already
+# occupies a port — e.g. run Floci on 4567 without touching a LocalStack on 4566:
+#
+#   FLOCI_PORT=4567 docker compose --profile floci up -d
+#
+# ⚠️  Floci and LocalStack default to the same host port 4566 — run only ONE at a time,
+#     or override one with FLOCI_PORT / LOCALSTACK_PORT.
+#
+# The OpenConsole dev server origin (http://localhost:3939) is pre-allowed for CORS,
+# so the app can talk to these backends directly from the browser. If you serve the
+# app from a different origin, update the *_CORS_* values below.
+#
+# Stop / clean up:
+#   docker compose --profile <name> down            # stop
+#   docker compose --profile <name> down -v         # stop + drop data volumes
+
+name: openconsole-backends
+
+services:
+  # Floci — github.com/floci-io/floci. LocalStack drop-in that really runs
+  # container-backed services (EC2/ECS/...), so it needs the Docker socket and a
+  # network to attach spawned containers to.
+  floci:
+    image: floci/floci:latest
+    profiles: ["floci"]
+    ports:
+      - "${FLOCI_PORT:-4566}:4566"
+    environment:
+      # Canonical Quarkus config key. (The docs mention an EXTRA_CORS_ALLOWED_ORIGINS alias, but
+      # only this FLOCI_SECURITY_* form is bound by @ConfigMapping and actually enables CORS.)
+      FLOCI_SECURITY_EXTRA_CORS_ALLOWED_ORIGINS: "http://localhost:3939"
+      FLOCI_SERVICES_DOCKER_NETWORK: openconsole-backends_default
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - floci-data:/app/data
+
+  # LocalStack — community edition. EC2/S3/etc. work; ELB/ASG are Pro-only and will
+  # surface as "not supported" in the UI.
+  localstack:
+    image: localstack/localstack:latest
+    profiles: ["localstack"]
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      EXTRA_CORS_ALLOWED_ORIGINS: "http://localhost:3939"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # MinIO — S3 only.
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio"]
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:3939"
+    volumes:
+      - minio-data:/data
+
+  # moto — moto_server standalone mock (dashboard at /moto-api/).
+  moto:
+    image: motoserver/moto:latest
+    profiles: ["moto"]
+    ports:
+      - "${MOTO_PORT:-5000}:5000"
+
+volumes:
+  floci-data:
+  minio-data:

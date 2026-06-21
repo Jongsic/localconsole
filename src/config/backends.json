@@ -1,0 +1,38 @@
+{
+  "$schema-note": "Backend registry. Add a backend by adding an entry here — see README. `detect` is optional (omit for AWS, which is assumed when the endpoint is empty or *.amazonaws.com). `sections` lists which top-level nav areas to OPEN; anything not listed is hidden. Within an open section, individual services that the backend cannot do are handled gracefully at runtime (shown as 'not supported'), so you do NOT need to enumerate per-service support here.",
+  "backends": {
+    "aws": {
+      "label": "AWS",
+      "sections": ["s3", "compute", "vpc", "db", "function"]
+    },
+    "floci": {
+      "label": "Floci",
+      "detect": { "healthPath": "/_floci/health", "ports": [4566], "jsonKey": "services" },
+      "sections": ["s3", "compute", "vpc", "db", "function"],
+      "note": "Floci (github.com/floci-io/floci) is a LocalStack drop-in. It must be checked BEFORE localstack: it serves the LocalStack-compat /_localstack/health too, but only Floci serves its native /_floci/health (404 on LocalStack), which is the distinguishing signal."
+    },
+    "localstack": {
+      "label": "LocalStack",
+      "detect": { "healthPath": "/_localstack/health", "ports": [4566], "jsonKey": "services" },
+      "sections": ["s3", "compute", "vpc", "db", "function"]
+    },
+    "moto": {
+      "label": "moto",
+      "detect": { "healthPath": "/moto-api/", "ports": [5000] },
+      "sections": ["s3", "compute", "vpc", "db", "function"]
+    },
+    "minio": {
+      "label": "MinIO",
+      "detect": { "healthPath": "/minio/health/live", "ports": [9000] },
+      "sections": ["s3"]
+    },
+    "unknown": {
+      "label": "Unknown / generic S3",
+      "sections": ["s3"]
+    },
+    "none": {
+      "label": "Not connected",
+      "sections": []
+    }
+  }
+}

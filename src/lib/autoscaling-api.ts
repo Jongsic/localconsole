@@ -1,11 +1,14 @@
 import {
   type AutoScalingGroup,
+  CreateAutoScalingGroupCommand,
+  DeleteAutoScalingGroupCommand,
   DescribeAutoScalingGroupsCommand,
   DescribePoliciesCommand,
   DescribeScheduledActionsCommand,
+  UpdateAutoScalingGroupCommand,
 } from "@aws-sdk/client-auto-scaling";
 import { getAutoScalingClient } from "./autoscaling-client";
-import type { AsgDetail, AsgSummary } from "./types";
+import type { AsgCapacityInput, AsgDetail, AsgSummary, CreateAsgInput } from "./types";
 
 function launchTemplateLabel(g: AutoScalingGroup): string | null {
   return (
@@ -75,5 +78,36 @@ export const api = {
         startTime: s.StartTime ? s.StartTime.toISOString() : null,
       })),
     };
+  },
+
+  createAutoScalingGroup: async (input: CreateAsgInput): Promise<void> => {
+    await getAutoScalingClient().send(
+      new CreateAutoScalingGroupCommand({
+        AutoScalingGroupName: input.name,
+        LaunchTemplate: { LaunchTemplateId: input.launchTemplateId, Version: "$Default" },
+        MinSize: input.minSize,
+        MaxSize: input.maxSize,
+        DesiredCapacity: input.desiredCapacity,
+        ...(input.subnetIds.length ? { VPCZoneIdentifier: input.subnetIds.join(",") } : {}),
+        ...(input.targetGroupArns.length ? { TargetGroupARNs: input.targetGroupArns } : {}),
+      }),
+    );
+  },
+
+  updateCapacity: async (name: string, cap: AsgCapacityInput): Promise<void> => {
+    await getAutoScalingClient().send(
+      new UpdateAutoScalingGroupCommand({
+        AutoScalingGroupName: name,
+        MinSize: cap.minSize,
+        MaxSize: cap.maxSize,
+        DesiredCapacity: cap.desiredCapacity,
+      }),
+    );
+  },
+
+  deleteAutoScalingGroup: async (name: string, force: boolean): Promise<void> => {
+    await getAutoScalingClient().send(
+      new DeleteAutoScalingGroupCommand({ AutoScalingGroupName: name, ForceDelete: force }),
+    );
   },
 };

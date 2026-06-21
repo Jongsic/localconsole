@@ -1,19 +1,48 @@
 import {
   type Action,
+  AddTagsCommand,
+  CreateListenerCommand,
+  type CreateListenerCommandInput,
+  CreateLoadBalancerCommand,
+  type CreateLoadBalancerCommandInput,
+  CreateRuleCommand,
+  CreateTargetGroupCommand,
+  type CreateTargetGroupCommandInput,
+  DeleteListenerCommand,
+  DeleteLoadBalancerCommand,
+  DeleteRuleCommand,
+  DeleteTargetGroupCommand,
+  DeregisterTargetsCommand,
   DescribeListenersCommand,
+  DescribeLoadBalancerAttributesCommand,
   DescribeLoadBalancersCommand,
   DescribeRulesCommand,
+  DescribeTagsCommand,
+  DescribeTargetGroupAttributesCommand,
   DescribeTargetGroupsCommand,
   DescribeTargetHealthCommand,
+  ModifyLoadBalancerAttributesCommand,
+  ModifyTargetGroupAttributesCommand,
+  ModifyTargetGroupCommand,
+  RegisterTargetsCommand,
+  RemoveTagsCommand,
   type RuleCondition,
 } from "@aws-sdk/client-elastic-load-balancing-v2";
 import { getElbv2Client } from "./elbv2-client";
 import type {
+  AlbAttributes,
   AlbListenerDetail,
   AlbRuleSummary,
   AlbSummary,
+  CreateAlbInput,
+  CreateListenerInput,
+  CreateRuleInput,
+  CreateTargetGroupInput,
+  Tag,
+  TargetGroupAttributes,
   TargetGroupSummary,
   TargetHealthEntry,
+  TgHealthCheckInput,
 } from "./types";
 
 /** Short target-group name from its ARN (arn:...:targetgroup/NAME/id) */
@@ -83,6 +112,8 @@ export const api = {
           new DescribeRulesCommand({ ListenerArn: l.ListenerArn }),
         );
         const rules: AlbRuleSummary[] = (rulesOut.Rules ?? []).map((r) => ({
+          arn: r.RuleArn ?? "",
+          isDefault: r.IsDefault ?? false,
           priority: r.Priority ?? "—",
           conditions: (r.Conditions ?? []).map(conditionText),
           actions: (r.Actions ?? []).map(actionText),
@@ -109,8 +140,65 @@ export const api = {
       vpcId: tg.VpcId ?? null,
       healthCheckPath: tg.HealthCheckPath ?? null,
       healthCheckProtocol: tg.HealthCheckProtocol ?? null,
+      healthCheckIntervalSeconds: tg.HealthCheckIntervalSeconds ?? null,
+      healthCheckTimeoutSeconds: tg.HealthCheckTimeoutSeconds ?? null,
+      healthyThreshold: tg.HealthyThresholdCount ?? null,
+      unhealthyThreshold: tg.UnhealthyThresholdCount ?? null,
+      matcherHttpCode: tg.Matcher?.HttpCode ?? null,
       loadBalancerArns: tg.LoadBalancerArns ?? [],
     }));
+  },
+
+  modifyHealthCheck: async (targetGroupArn: string, hc: TgHealthCheckInput): Promise<void> => {
+    await getElbv2Client().send(
+      new ModifyTargetGroupCommand({
+        TargetGroupArn: targetGroupArn,
+        ...(hc.path ? { HealthCheckPath: hc.path } : {}),
+        HealthCheckIntervalSeconds: hc.intervalSeconds,
+        HealthCheckTimeoutSeconds: hc.timeoutSeconds,
+        HealthyThresholdCount: hc.healthyThreshold,
+        UnhealthyThresholdCount: hc.unhealthyThreshold,
+        ...(hc.matcherHttpCode ? { Matcher: { HttpCode: hc.matcherHttpCode } } : {}),
+      }),
+    );
+  },
+
+  getTargetGroupAttributes: async (targetGroupArn: string): Promise<TargetGroupAttributes> => {
+    const out = await getElbv2Client().send(
+      new DescribeTargetGroupAttributesCommand({ TargetGroupArn: targetGroupArn }),
+    );
+    const m = new Map((out.Attributes ?? []).map((a) => [a.Key ?? "", a.Value ?? ""]));
+    return {
+      stickinessEnabled: m.get("stickiness.enabled") === "true",
+      stickinessType: m.get("stickiness.type") ?? "lb_cookie",
+      stickinessDurationSeconds: Number(m.get("stickiness.lb_cookie.duration_seconds") ?? "86400"),
+      deregistrationDelaySeconds: Number(m.get("deregistration_delay.timeout_seconds") ?? "300"),
+      loadBalancingAlgorithm: m.get("load_balancing.algorithm.type") ?? "round_robin",
+    };
+  },
+
+  modifyTargetGroupAttributes: async (
+    targetGroupArn: string,
+    attrs: TargetGroupAttributes,
+  ): Promise<void> => {
+    await getElbv2Client().send(
+      new ModifyTargetGroupAttributesCommand({
+        TargetGroupArn: targetGroupArn,
+        Attributes: [
+          { Key: "stickiness.enabled", Value: String(attrs.stickinessEnabled) },
+          { Key: "stickiness.type", Value: attrs.stickinessType },
+          {
+            Key: "stickiness.lb_cookie.duration_seconds",
+            Value: String(attrs.stickinessDurationSeconds),
+          },
+          {
+            Key: "deregistration_delay.timeout_seconds",
+            Value: String(attrs.deregistrationDelaySeconds),
+          },
+          { Key: "load_balancing.algorithm.type", Value: attrs.loadBalancingAlgorithm },
+        ],
+      }),
+    );
   },
 
   getTargetHealth: async (targetGroupArn: string): Promise<TargetHealthEntry[]> => {
@@ -124,5 +212,172 @@ export const api = {
       reason: d.TargetHealth?.Reason ?? null,
       description: d.TargetHealth?.Description ?? null,
     }));
+  },
+
+  createTargetGroup: async (input: CreateTargetGroupInput): Promise<void> => {
+    await getElbv2Client().send(
+      new CreateTargetGroupCommand({
+        Name: input.name,
+        Protocol: input.protocol as CreateTargetGroupCommandInput["Protocol"],
+        Port: input.port,
+        TargetType: input.targetType as CreateTargetGroupCommandInput["TargetType"],
+        ...(input.vpcId ? { VpcId: input.vpcId } : {}),
+        ...(input.healthCheckPath ? { HealthCheckPath: input.healthCheckPath } : {}),
+      }),
+    );
+  },
+
+  deleteTargetGroup: async (targetGroupArn: string): Promise<void> => {
+    await getElbv2Client().send(new DeleteTargetGroupCommand({ TargetGroupArn: targetGroupArn }));
+  },
+
+  registerTarget: async (
+    targetGroupArn: string,
+    id: string,
+    port: number | null,
+  ): Promise<void> => {
+    await getElbv2Client().send(
+      new RegisterTargetsCommand({
+        TargetGroupArn: targetGroupArn,
+        Targets: [{ Id: id, ...(port != null ? { Port: port } : {}) }],
+      }),
+    );
+  },
+
+  deregisterTarget: async (
+    targetGroupArn: string,
+    id: string,
+    port: number | null,
+  ): Promise<void> => {
+    await getElbv2Client().send(
+      new DeregisterTargetsCommand({
+        TargetGroupArn: targetGroupArn,
+        Targets: [{ Id: id, ...(port != null ? { Port: port } : {}) }],
+      }),
+    );
+  },
+
+  createLoadBalancer: async (input: CreateAlbInput): Promise<void> => {
+    await getElbv2Client().send(
+      new CreateLoadBalancerCommand({
+        Name: input.name,
+        Scheme: input.scheme as CreateLoadBalancerCommandInput["Scheme"],
+        Type: input.type as CreateLoadBalancerCommandInput["Type"],
+        Subnets: input.subnetIds,
+        ...(input.securityGroupIds.length ? { SecurityGroups: input.securityGroupIds } : {}),
+      }),
+    );
+  },
+
+  deleteLoadBalancer: async (loadBalancerArn: string): Promise<void> => {
+    await getElbv2Client().send(
+      new DeleteLoadBalancerCommand({ LoadBalancerArn: loadBalancerArn }),
+    );
+  },
+
+  createListener: async (input: CreateListenerInput): Promise<void> => {
+    const defaultAction: NonNullable<CreateListenerCommandInput["DefaultActions"]>[number] =
+      input.action.type === "forward"
+        ? { Type: "forward", TargetGroupArn: input.action.targetGroupArn }
+        : {
+            Type: "fixed-response",
+            FixedResponseConfig: {
+              StatusCode: input.action.statusCode,
+              ContentType: input.action.contentType || "text/plain",
+              MessageBody: input.action.body,
+            },
+          };
+    await getElbv2Client().send(
+      new CreateListenerCommand({
+        LoadBalancerArn: input.loadBalancerArn,
+        Protocol: input.protocol as CreateListenerCommandInput["Protocol"],
+        Port: input.port,
+        DefaultActions: [defaultAction],
+      }),
+    );
+  },
+
+  deleteListener: async (listenerArn: string): Promise<void> => {
+    await getElbv2Client().send(new DeleteListenerCommand({ ListenerArn: listenerArn }));
+  },
+
+  createRule: async (input: CreateRuleInput): Promise<void> => {
+    const values = input.values
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    await getElbv2Client().send(
+      new CreateRuleCommand({
+        ListenerArn: input.listenerArn,
+        Priority: input.priority,
+        Conditions: [
+          input.conditionField === "path-pattern"
+            ? { Field: "path-pattern", PathPatternConfig: { Values: values } }
+            : { Field: "host-header", HostHeaderConfig: { Values: values } },
+        ],
+        Actions: [{ Type: "forward", TargetGroupArn: input.targetGroupArn }],
+      }),
+    );
+  },
+
+  deleteRule: async (ruleArn: string): Promise<void> => {
+    await getElbv2Client().send(new DeleteRuleCommand({ RuleArn: ruleArn }));
+  },
+
+  getLoadBalancerAttributes: async (loadBalancerArn: string): Promise<AlbAttributes> => {
+    const out = await getElbv2Client().send(
+      new DescribeLoadBalancerAttributesCommand({ LoadBalancerArn: loadBalancerArn }),
+    );
+    const m = new Map((out.Attributes ?? []).map((a) => [a.Key ?? "", a.Value ?? ""]));
+    return {
+      idleTimeoutSeconds: Number(m.get("idle_timeout.timeout_seconds") ?? "60"),
+      deletionProtection: m.get("deletion_protection.enabled") === "true",
+      http2Enabled: m.get("routing.http2.enabled") !== "false",
+    };
+  },
+
+  modifyLoadBalancerAttributes: async (
+    loadBalancerArn: string,
+    attrs: AlbAttributes,
+  ): Promise<void> => {
+    await getElbv2Client().send(
+      new ModifyLoadBalancerAttributesCommand({
+        LoadBalancerArn: loadBalancerArn,
+        Attributes: [
+          { Key: "idle_timeout.timeout_seconds", Value: String(attrs.idleTimeoutSeconds) },
+          { Key: "deletion_protection.enabled", Value: String(attrs.deletionProtection) },
+          { Key: "routing.http2.enabled", Value: String(attrs.http2Enabled) },
+        ],
+      }),
+    );
+  },
+
+  /** Tags for any ELBv2 resource (load balancer, target group, listener, rule). */
+  getTags: async (resourceArn: string): Promise<Tag[]> => {
+    const out = await getElbv2Client().send(
+      new DescribeTagsCommand({ ResourceArns: [resourceArn] }),
+    );
+    return (out.TagDescriptions?.[0]?.Tags ?? []).map((tg) => ({
+      key: tg.Key ?? "",
+      value: tg.Value ?? "",
+    }));
+  },
+
+  saveTags: async (resourceArn: string, tags: Tag[], removedKeys: string[]): Promise<void> => {
+    const client = getElbv2Client();
+    if (removedKeys.length > 0) {
+      await client.send(
+        new RemoveTagsCommand({ ResourceArns: [resourceArn], TagKeys: removedKeys }),
+      );
+    }
+    const upserts = tags.filter((tg) => tg.key.trim() !== "");
+    if (upserts.length > 0) {
+      await client.send(
+        new AddTagsCommand({
+          ResourceArns: [resourceArn],
+          Tags: upserts.map((tg) => ({ Key: tg.key, Value: tg.value })),
+        }),
+      );
+    }
   },
 };

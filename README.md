@@ -4,7 +4,7 @@
 [![Deploy](https://github.com/Jongsic/openconsole/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jongsic/openconsole/actions/workflows/deploy.yml)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/Jongsic/openconsole/blob/main/LICENSE)
 
-A **browser-only** console for **LocalStack, MinIO, or real AWS**.
+A **browser-only** console for **LocalStack, Floci, moto, MinIO, or real AWS**.
 There is no server: the browser talks to your endpoint directly using the AWS SDK. Connection
 settings live in your browser's `localStorage`.
 
@@ -19,11 +19,24 @@ settings live in your browser's `localStorage`.
 
 - 🌐 UI in English / Korean (auto-detected from browser locale, switchable)
 - 🔌 Connect to any endpoint from the settings dialog
-- 🔎 Auto-detects the backend (LocalStack / MinIO / AWS) and gates features accordingly
-- 🪣 Buckets: list / create / delete (with force)
-- 📁 Objects: prefix browsing, upload (drag & drop), folders, text edit, download, delete
-- ⚙️ Bucket properties (great for creating IaC drift): versioning, tags, encryption,
-  static website (index/error docs), CORS, bucket policy, ARN
+- 🔎 Auto-detects the backend (LocalStack / Floci / moto / MinIO / AWS) and gates features accordingly
+- 🪣 **S3** — buckets (list / create / delete with force); objects: prefix browsing, upload
+  (drag & drop), folders, text edit, download, delete; bucket properties: versioning, tags,
+  encryption, static website, CORS, bucket policy, ARN
+- 🖥️ **Compute** — an AWS-style section with a left sub-nav:
+  - **EC2 instances** — list, detail (details / security / networking / storage / tags), launch
+    (key pair, security groups, subnet pickers), start / stop / reboot / terminate, edit
+    (tags, instance type, security groups, termination & stop protection), IMDSv2 / user data view
+  - **Security groups** — list + detail page, create / delete, inbound/outbound rule add / remove
+  - **Volumes** (EBS), **Key pairs** (create / import / delete), **Launch templates**
+  - **Load balancers** (ALB/NLB) — detail page with attributes, tags, listeners (create / delete),
+    and per-listener rules (priority / path / host conditions)
+  - **Target groups** — create / delete, register / deregister targets, health-check + stickiness
+    + algorithm editing, tags
+  - **Auto Scaling groups** — create / delete, capacity edit, scaling policies & scheduled actions
+- 🛟 Graceful degradation — anything a backend doesn't implement shows a calm "not supported"
+  state instead of an error; permission/CORS errors are surfaced, not hidden
+- 🚧 VPC, DB/Cache (RDS/ElastiCache), and Function (Lambda) sections are scaffolded (coming soon)
 
 ## Architecture: why browser-only
 
@@ -39,11 +52,37 @@ from the app's origin (see below).
 
 ## Backend support
 
-| Backend | Support | Notes |
-| --- | --- | --- |
-| LocalStack | Full (S3 + EC2/ALB/ASG tabs) | Other service tabs enabled only when LocalStack is detected |
-| MinIO | S3 only | Static website hosting / per-bucket CORS aren't implemented by MinIO's S3 API |
-| Real AWS | S3 only | Leave the endpoint empty; use a least-privilege IAM key |
+OpenConsole talks to any AWS-compatible endpoint via the AWS SDK. A small registry decides which
+**top-level sections** (S3, Compute, VPC, DB/Cache, Function) to open per backend; anything a backend
+can't actually do is handled gracefully at runtime (shown as a quiet "not supported" state) rather
+than enumerated up front.
+
+| Backend | Detected by | Sections opened | Notes |
+| --- | --- | --- | --- |
+| Real AWS | empty / `*.amazonaws.com` endpoint | all | Use a least-privilege IAM key |
+| LocalStack | `/_localstack/health` (:4566) | all | Community can't do ELB/ASG → those show "not supported"; Pro does |
+| Floci | `/_floci/health` (:4566) | all | [Drop-in LocalStack replacement](https://github.com/floci-io/floci) that really does run EC2/ELB/ASG. Shares LocalStack's port/health, so it's detected by its native `/_floci/health` (checked before LocalStack) |
+| moto | `/moto-api/` (:5000) | all | `moto_server` standalone mode |
+| MinIO | `/minio/health/live` (:9000) | S3 only | Static website hosting / per-bucket CORS aren't in MinIO's S3 API |
+| Unknown / generic S3 | — | S3 only | Safe default for any other S3-compatible endpoint |
+
+### Adding / changing a backend
+
+Backends live in [`src/config/backends.json`](src/config/backends.json) — no code change needed for
+detection or section gating:
+
+```jsonc
+"mybackend": {
+  "label": "My Backend",
+  "detect": { "healthPath": "/health", "ports": [1234], "jsonKey": "optionalRequiredKey" },
+  "sections": ["s3", "compute", "vpc", "db", "function"]
+}
+```
+
+- `detect` is optional (omit for AWS). `jsonKey`, if set, requires that key in the health JSON to match.
+- `sections` lists which nav areas to open. Don't try to enumerate per-service support — within an
+  open section, unsupported services are detected at call time and shown as "not supported", so
+  e.g. LocalStack Community and Pro share one entry.
 
 ## ⚠️ CORS is required (read this)
 
