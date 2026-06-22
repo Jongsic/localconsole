@@ -26,14 +26,16 @@ export function KV({
   value,
   mono,
   children,
+  className,
 }: {
   label: ReactNode;
   value?: string | null;
   mono?: boolean;
   children?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <div className="mb-1 text-xs font-medium text-slate-500">{label}</div>
       {children != null ? (
         children

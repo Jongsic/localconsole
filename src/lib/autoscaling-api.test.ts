@@ -2,10 +2,14 @@ import {
   AutoScalingClient,
   type AutoScalingGroup,
   CreateAutoScalingGroupCommand,
+  DeletePolicyCommand,
+  DeleteScheduledActionCommand,
   DescribeAutoScalingGroupsCommand,
   DescribePoliciesCommand,
   DescribeScheduledActionsCommand,
   type Instance,
+  PutScalingPolicyCommand,
+  PutScheduledUpdateGroupActionCommand,
   UpdateAutoScalingGroupCommand,
 } from "@aws-sdk/client-auto-scaling";
 import { mockClient } from "aws-sdk-client-mock";
@@ -220,6 +224,84 @@ describe("write/command shapes", () => {
       MinSize: 2,
       MaxSize: 8,
       DesiredCapacity: 4,
+    });
+  });
+
+  it("putScalingPolicy maps the CPU predefined metric (no resource label)", async () => {
+    asg.on(PutScalingPolicyCommand).resolves({});
+    await api.putScalingPolicy({
+      asgName: "web-asg",
+      policyName: "cpu",
+      metricType: "ASGAverageCPUUtilization",
+      targetValue: 50,
+    });
+    expect(asg.commandCalls(PutScalingPolicyCommand)[0]?.args[0].input).toEqual({
+      AutoScalingGroupName: "web-asg",
+      PolicyName: "cpu",
+      PolicyType: "TargetTrackingScaling",
+      TargetTrackingConfiguration: {
+        PredefinedMetricSpecification: { PredefinedMetricType: "ASGAverageCPUUtilization" },
+        TargetValue: 50,
+      },
+    });
+  });
+
+  it("putScalingPolicy includes ResourceLabel for ALBRequestCountPerTarget", async () => {
+    asg.on(PutScalingPolicyCommand).resolves({});
+    await api.putScalingPolicy({
+      asgName: "web-asg",
+      policyName: "alb",
+      metricType: "ALBRequestCountPerTarget",
+      targetValue: 1000,
+      resourceLabel: "app/my-lb/abc/targetgroup/my-tg/def",
+    });
+    const spec =
+      asg.commandCalls(PutScalingPolicyCommand)[0]?.args[0].input?.TargetTrackingConfiguration
+        ?.PredefinedMetricSpecification;
+    expect(spec).toEqual({
+      PredefinedMetricType: "ALBRequestCountPerTarget",
+      ResourceLabel: "app/my-lb/abc/targetgroup/my-tg/def",
+    });
+  });
+
+  it("putScheduledAction sends recurrence + capacity; omits unset capacity", async () => {
+    asg.on(PutScheduledUpdateGroupActionCommand).resolves({});
+    await api.putScheduledAction({
+      asgName: "web-asg",
+      name: "scale-up",
+      recurrence: "0 9 * * *",
+      minSize: 2,
+      maxSize: 6,
+      desiredCapacity: 4,
+    });
+    expect(asg.commandCalls(PutScheduledUpdateGroupActionCommand)[0]?.args[0].input).toEqual({
+      AutoScalingGroupName: "web-asg",
+      ScheduledActionName: "scale-up",
+      Recurrence: "0 9 * * *",
+      MinSize: 2,
+      MaxSize: 6,
+      DesiredCapacity: 4,
+    });
+
+    asg.reset();
+    asg.on(PutScheduledUpdateGroupActionCommand).resolves({});
+    await api.putScheduledAction({ asgName: "web-asg", name: "x", recurrence: "0 0 * * *" });
+    const input = asg.commandCalls(PutScheduledUpdateGroupActionCommand)[0]?.args[0].input;
+    expect(input).not.toHaveProperty("MinSize");
+    expect(input).not.toHaveProperty("DesiredCapacity");
+  });
+
+  it("deletePolicy / deleteScheduledAction send the right names", async () => {
+    asg.on(DeletePolicyCommand).resolves({}).on(DeleteScheduledActionCommand).resolves({});
+    await api.deletePolicy("web-asg", "cpu");
+    await api.deleteScheduledAction("web-asg", "scale-up");
+    expect(asg.commandCalls(DeletePolicyCommand)[0]?.args[0].input).toEqual({
+      AutoScalingGroupName: "web-asg",
+      PolicyName: "cpu",
+    });
+    expect(asg.commandCalls(DeleteScheduledActionCommand)[0]?.args[0].input).toEqual({
+      AutoScalingGroupName: "web-asg",
+      ScheduledActionName: "scale-up",
     });
   });
 });

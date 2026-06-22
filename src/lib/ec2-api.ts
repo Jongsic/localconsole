@@ -1,12 +1,19 @@
 import {
+  AttachVolumeCommand,
   AuthorizeSecurityGroupEgressCommand,
   AuthorizeSecurityGroupIngressCommand,
   CreateKeyPairCommand,
+  CreateLaunchTemplateCommand,
+  type CreateLaunchTemplateCommandInput,
   CreateSecurityGroupCommand,
   CreateTagsCommand,
+  CreateVolumeCommand,
+  type CreateVolumeCommandInput,
   DeleteKeyPairCommand,
+  DeleteLaunchTemplateCommand,
   DeleteSecurityGroupCommand,
   DeleteTagsCommand,
+  DeleteVolumeCommand,
   DescribeInstanceAttributeCommand,
   DescribeInstancesCommand,
   DescribeKeyPairsCommand,
@@ -15,6 +22,7 @@ import {
   DescribeSecurityGroupsCommand,
   DescribeSubnetsCommand,
   DescribeVolumesCommand,
+  DetachVolumeCommand,
   ImportKeyPairCommand,
   type Instance,
   type IpPermission,
@@ -31,7 +39,9 @@ import {
 } from "@aws-sdk/client-ec2";
 import { getEc2Client } from "./ec2-client";
 import type {
+  CreateLaunchTemplateInput,
   CreateSecurityGroupInput,
+  CreateVolumeInput,
   Ec2InstanceAction,
   Ec2InstanceDetail,
   Ec2InstanceState,
@@ -336,6 +346,52 @@ export const api = {
         encrypted: b.Ebs?.Encrypted ?? null,
       })),
     };
+  },
+
+  createLaunchTemplate: async (input: CreateLaunchTemplateInput): Promise<void> => {
+    const params: CreateLaunchTemplateCommandInput = {
+      LaunchTemplateName: input.name,
+      LaunchTemplateData: {
+        ImageId: input.imageId,
+        InstanceType: input.instanceType as NonNullable<
+          CreateLaunchTemplateCommandInput["LaunchTemplateData"]
+        >["InstanceType"],
+        ...(input.keyName ? { KeyName: input.keyName } : {}),
+        ...(input.securityGroupIds?.length ? { SecurityGroupIds: input.securityGroupIds } : {}),
+      },
+    };
+    await getEc2Client().send(new CreateLaunchTemplateCommand(params));
+  },
+
+  deleteLaunchTemplate: async (launchTemplateId: string): Promise<void> => {
+    await getEc2Client().send(
+      new DeleteLaunchTemplateCommand({ LaunchTemplateId: launchTemplateId }),
+    );
+  },
+
+  createVolume: async (input: CreateVolumeInput): Promise<void> => {
+    const params: CreateVolumeCommandInput = {
+      AvailabilityZone: input.availabilityZone,
+      Size: input.size,
+      VolumeType: input.volumeType as CreateVolumeCommandInput["VolumeType"],
+      Encrypted: input.encrypted,
+      ...(input.iops ? { Iops: input.iops } : {}),
+    };
+    await getEc2Client().send(new CreateVolumeCommand(params));
+  },
+
+  deleteVolume: async (volumeId: string): Promise<void> => {
+    await getEc2Client().send(new DeleteVolumeCommand({ VolumeId: volumeId }));
+  },
+
+  attachVolume: async (volumeId: string, instanceId: string, device: string): Promise<void> => {
+    await getEc2Client().send(
+      new AttachVolumeCommand({ VolumeId: volumeId, InstanceId: instanceId, Device: device }),
+    );
+  },
+
+  detachVolume: async (volumeId: string): Promise<void> => {
+    await getEc2Client().send(new DetachVolumeCommand({ VolumeId: volumeId }));
   },
 
   /** Termination + stop protection flags (DescribeInstanceAttribute). */

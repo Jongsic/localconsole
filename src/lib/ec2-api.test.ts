@@ -1,10 +1,15 @@
 import {
+  AttachVolumeCommand,
   AuthorizeSecurityGroupEgressCommand,
   AuthorizeSecurityGroupIngressCommand,
   CreateKeyPairCommand,
+  CreateLaunchTemplateCommand,
   CreateSecurityGroupCommand,
   CreateTagsCommand,
+  CreateVolumeCommand,
+  DeleteLaunchTemplateCommand,
   DeleteTagsCommand,
+  DeleteVolumeCommand,
   DescribeInstanceAttributeCommand,
   DescribeInstancesCommand,
   DescribeKeyPairsCommand,
@@ -13,6 +18,7 @@ import {
   DescribeSecurityGroupsCommand,
   DescribeSubnetsCommand,
   DescribeVolumesCommand,
+  DetachVolumeCommand,
   EC2Client,
   ImportKeyPairCommand,
   ModifyInstanceAttributeCommand,
@@ -555,6 +561,89 @@ describe("write/command shapes", () => {
     expect(new TextDecoder().decode(input?.PublicKeyMaterial as Uint8Array)).toBe(
       "ssh-ed25519 AAAA",
     );
+  });
+
+  it("createLaunchTemplate builds minimal LaunchTemplateData; omits optional fields", async () => {
+    ec2.on(CreateLaunchTemplateCommand).resolves({});
+    await api.createLaunchTemplate({
+      name: "web-lt",
+      imageId: "ami-1",
+      instanceType: "t3.micro",
+      keyName: "demo",
+      securityGroupIds: ["sg-1", "sg-2"],
+    });
+    expect(ec2.commandCalls(CreateLaunchTemplateCommand)[0]?.args[0].input).toEqual({
+      LaunchTemplateName: "web-lt",
+      LaunchTemplateData: {
+        ImageId: "ami-1",
+        InstanceType: "t3.micro",
+        KeyName: "demo",
+        SecurityGroupIds: ["sg-1", "sg-2"],
+      },
+    });
+
+    ec2.reset();
+    ec2.on(CreateLaunchTemplateCommand).resolves({});
+    await api.createLaunchTemplate({ name: "min", imageId: "ami-2", instanceType: "t3.small" });
+    const data = ec2.commandCalls(CreateLaunchTemplateCommand)[0]?.args[0].input
+      ?.LaunchTemplateData;
+    expect(data).not.toHaveProperty("KeyName");
+    expect(data).not.toHaveProperty("SecurityGroupIds");
+  });
+
+  it("deleteLaunchTemplate sends the id", async () => {
+    ec2.on(DeleteLaunchTemplateCommand).resolves({});
+    await api.deleteLaunchTemplate("lt-1");
+    expect(ec2.commandCalls(DeleteLaunchTemplateCommand)[0]?.args[0].input).toEqual({
+      LaunchTemplateId: "lt-1",
+    });
+  });
+
+  it("createVolume maps fields and omits Iops when not provided", async () => {
+    ec2.on(CreateVolumeCommand).resolves({});
+    await api.createVolume({
+      availabilityZone: "us-east-1a",
+      size: 20,
+      volumeType: "gp3",
+      encrypted: true,
+    });
+    expect(ec2.commandCalls(CreateVolumeCommand)[0]?.args[0].input).toEqual({
+      AvailabilityZone: "us-east-1a",
+      Size: 20,
+      VolumeType: "gp3",
+      Encrypted: true,
+    });
+
+    ec2.reset();
+    ec2.on(CreateVolumeCommand).resolves({});
+    await api.createVolume({
+      availabilityZone: "us-east-1a",
+      size: 100,
+      volumeType: "io1",
+      iops: 5000,
+      encrypted: false,
+    });
+    expect(ec2.commandCalls(CreateVolumeCommand)[0]?.args[0].input).toMatchObject({ Iops: 5000 });
+  });
+
+  it("attachVolume / detachVolume / deleteVolume send the right inputs", async () => {
+    ec2
+      .on(AttachVolumeCommand)
+      .resolves({})
+      .on(DetachVolumeCommand)
+      .resolves({})
+      .on(DeleteVolumeCommand)
+      .resolves({});
+    await api.attachVolume("vol-1", "i-1", "/dev/sdf");
+    await api.detachVolume("vol-1");
+    await api.deleteVolume("vol-1");
+    expect(ec2.commandCalls(AttachVolumeCommand)[0]?.args[0].input).toEqual({
+      VolumeId: "vol-1",
+      InstanceId: "i-1",
+      Device: "/dev/sdf",
+    });
+    expect(ec2.commandCalls(DetachVolumeCommand)[0]?.args[0].input).toEqual({ VolumeId: "vol-1" });
+    expect(ec2.commandCalls(DeleteVolumeCommand)[0]?.args[0].input).toEqual({ VolumeId: "vol-1" });
   });
 
   it("runAction routes to the correct command per kind", async () => {

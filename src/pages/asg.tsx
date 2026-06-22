@@ -21,6 +21,7 @@ import {
   CONTROL_CLASS,
   Field,
   FieldLabel,
+  FormCard,
   Modal,
   Select,
   TextInput,
@@ -28,7 +29,7 @@ import {
 import { api } from "@/lib/autoscaling-api";
 import { api as ec2 } from "@/lib/ec2-api";
 import { api as elbv2 } from "@/lib/elbv2-api";
-import type { AsgSummary } from "@/lib/types";
+import type { AsgPredefinedMetric, AsgSummary } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
 export function AsgPage() {
@@ -375,11 +376,194 @@ function CapacityEditor({
   );
 }
 
+function AddPolicyForm({ asgName }: { asgName: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [policyName, setPolicyName] = useState("");
+  const [metricType, setMetricType] = useState<AsgPredefinedMetric>("ASGAverageCPUUtilization");
+  const [targetValue, setTargetValue] = useState(50);
+
+  const add = useMutation({
+    mutationFn: () =>
+      api.putScalingPolicy({ asgName, policyName: policyName.trim(), metricType, targetValue }),
+    onSuccess: () => {
+      toast.success(t("asg.policyAdded"));
+      qc.invalidateQueries({ queryKey: ["asg-detail", asgName] });
+      setPolicyName("");
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const inputCls = cn(CONTROL_CLASS, "py-1.5");
+
+  return (
+    <FormCard className="mt-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.pol.name")}</FieldLabel>
+          <input
+            value={policyName}
+            onChange={(e) => setPolicyName(e.target.value)}
+            autoComplete="off"
+            className={cn(inputCls, "w-40")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.pol.metric")}</FieldLabel>
+          <select
+            value={metricType}
+            onChange={(e) => setMetricType(e.target.value as AsgPredefinedMetric)}
+            className={inputCls}
+          >
+            <option value="ASGAverageCPUUtilization">{t("asg.metric.cpu")}</option>
+            <option value="ALBRequestCountPerTarget">{t("asg.metric.albRequests")}</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.pol.target")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            value={targetValue}
+            onChange={(e) => setTargetValue(Math.max(0, Number(e.target.value) || 0))}
+            className={cn(inputCls, "w-24")}
+          />
+        </label>
+        <Button
+          variant="secondary"
+          loading={add.isPending}
+          disabled={!policyName.trim()}
+          onClick={() => add.mutate()}
+        >
+          {t("asg.addPolicy")}
+        </Button>
+      </div>
+    </FormCard>
+  );
+}
+
+function AddScheduledForm({ asgName }: { asgName: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [actionName, setActionName] = useState("");
+  const [recurrence, setRecurrence] = useState("");
+  const [minSize, setMinSize] = useState(1);
+  const [desiredCapacity, setDesired] = useState(1);
+  const [maxSize, setMaxSize] = useState(2);
+
+  const add = useMutation({
+    mutationFn: () =>
+      api.putScheduledAction({
+        asgName,
+        name: actionName.trim(),
+        recurrence: recurrence.trim(),
+        minSize,
+        maxSize,
+        desiredCapacity,
+      }),
+    onSuccess: () => {
+      toast.success(t("asg.scheduledAdded"));
+      qc.invalidateQueries({ queryKey: ["asg-detail", asgName] });
+      setActionName("");
+      setRecurrence("");
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const inputCls = cn(CONTROL_CLASS, "py-1.5");
+
+  return (
+    <FormCard className="mt-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.sched.name")}</FieldLabel>
+          <input
+            value={actionName}
+            onChange={(e) => setActionName(e.target.value)}
+            autoComplete="off"
+            className={cn(inputCls, "w-36")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.sched.recurrence")}</FieldLabel>
+          <input
+            value={recurrence}
+            onChange={(e) => setRecurrence(e.target.value)}
+            placeholder="0 9 * * *"
+            autoComplete="off"
+            className={cn(inputCls, "w-36 font-mono")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.min")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            value={minSize}
+            onChange={(e) => setMinSize(Math.max(0, Number(e.target.value) || 0))}
+            className={cn(inputCls, "w-20")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.desired")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            value={desiredCapacity}
+            onChange={(e) => setDesired(Math.max(0, Number(e.target.value) || 0))}
+            className={cn(inputCls, "w-20")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.max")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            value={maxSize}
+            onChange={(e) => setMaxSize(Math.max(0, Number(e.target.value) || 0))}
+            className={cn(inputCls, "w-20")}
+          />
+        </label>
+        <Button
+          variant="secondary"
+          loading={add.isPending}
+          disabled={!actionName.trim() || !recurrence.trim()}
+          onClick={() => add.mutate()}
+        >
+          {t("asg.addScheduled")}
+        </Button>
+      </div>
+    </FormCard>
+  );
+}
+
 function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }) {
   const { t, i18n } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
   const detail = useQuery({
     queryKey: ["asg-detail", name],
     queryFn: () => api.getAutoScalingGroupDetail(name),
+  });
+
+  const deletePolicy = useMutation({
+    mutationFn: (policyName: string) => api.deletePolicy(name, policyName),
+    onSuccess: () => {
+      toast.success(t("asg.policyDeleted"));
+      qc.invalidateQueries({ queryKey: ["asg-detail", name] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const deleteScheduled = useMutation({
+    mutationFn: (actionName: string) => api.deleteScheduledAction(name, actionName),
+    onSuccess: () => {
+      toast.success(t("asg.scheduledDeleted"));
+      qc.invalidateQueries({ queryKey: ["asg-detail", name] });
+    },
+    onError: (e) => toast.error((e as Error).message),
   });
 
   return (
@@ -440,6 +624,7 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
                       <Th>{t("asg.pol.type")}</Th>
                       <Th>{t("asg.pol.metric")}</Th>
                       <Th>{t("asg.pol.target")}</Th>
+                      <Th />
                     </tr>
                   </Thead>
                   <tbody>
@@ -449,11 +634,23 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
                         <Td>{p.type ?? "—"}</Td>
                         <Td>{p.metric ?? "—"}</Td>
                         <Td>{p.targetValue ?? "—"}</Td>
+                        <Td className="text-right">
+                          <button
+                            type="button"
+                            title={t("common.delete")}
+                            disabled={deletePolicy.isPending}
+                            onClick={() => deletePolicy.mutate(p.name)}
+                            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </Td>
                       </Tr>
                     ))}
                   </tbody>
                 </Table>
               )}
+              <AddPolicyForm asgName={name} />
             </div>
 
             <div>
@@ -468,6 +665,7 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
                       <Th>{t("asg.sched.recurrence")}</Th>
                       <Th>{t("asg.sched.capacity")}</Th>
                       <Th>{t("asg.sched.start")}</Th>
+                      <Th />
                     </tr>
                   </Thead>
                   <tbody>
@@ -481,11 +679,23 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
                             .join(" / ")}
                         </Td>
                         <Td muted>{formatDate(s.startTime, i18n.language)}</Td>
+                        <Td className="text-right">
+                          <button
+                            type="button"
+                            title={t("common.delete")}
+                            disabled={deleteScheduled.isPending}
+                            onClick={() => deleteScheduled.mutate(s.name)}
+                            className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </Td>
                       </Tr>
                     ))}
                   </tbody>
                 </Table>
               )}
+              <AddScheduledForm asgName={name} />
             </div>
           </div>
         ) : null}

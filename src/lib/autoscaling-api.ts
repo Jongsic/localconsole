@@ -2,13 +2,25 @@ import {
   type AutoScalingGroup,
   CreateAutoScalingGroupCommand,
   DeleteAutoScalingGroupCommand,
+  DeletePolicyCommand,
+  DeleteScheduledActionCommand,
   DescribeAutoScalingGroupsCommand,
   DescribePoliciesCommand,
   DescribeScheduledActionsCommand,
+  PutScalingPolicyCommand,
+  type PutScalingPolicyCommandInput,
+  PutScheduledUpdateGroupActionCommand,
   UpdateAutoScalingGroupCommand,
 } from "@aws-sdk/client-auto-scaling";
 import { getAutoScalingClient } from "./autoscaling-client";
-import type { AsgCapacityInput, AsgDetail, AsgSummary, CreateAsgInput } from "./types";
+import type {
+  AsgCapacityInput,
+  AsgDetail,
+  AsgSummary,
+  CreateAsgInput,
+  PutScalingPolicyInput,
+  PutScheduledActionInput,
+} from "./types";
 
 function launchTemplateLabel(g: AutoScalingGroup): string | null {
   return (
@@ -108,6 +120,52 @@ export const api = {
   deleteAutoScalingGroup: async (name: string, force: boolean): Promise<void> => {
     await getAutoScalingClient().send(
       new DeleteAutoScalingGroupCommand({ AutoScalingGroupName: name, ForceDelete: force }),
+    );
+  },
+
+  putScalingPolicy: async (input: PutScalingPolicyInput): Promise<void> => {
+    const params: PutScalingPolicyCommandInput = {
+      AutoScalingGroupName: input.asgName,
+      PolicyName: input.policyName,
+      PolicyType: "TargetTrackingScaling",
+      TargetTrackingConfiguration: {
+        PredefinedMetricSpecification: {
+          PredefinedMetricType: input.metricType,
+          ...(input.metricType === "ALBRequestCountPerTarget" && input.resourceLabel
+            ? { ResourceLabel: input.resourceLabel }
+            : {}),
+        },
+        TargetValue: input.targetValue,
+      },
+    };
+    await getAutoScalingClient().send(new PutScalingPolicyCommand(params));
+  },
+
+  deletePolicy: async (asgName: string, policyName: string): Promise<void> => {
+    await getAutoScalingClient().send(
+      new DeletePolicyCommand({ AutoScalingGroupName: asgName, PolicyName: policyName }),
+    );
+  },
+
+  putScheduledAction: async (input: PutScheduledActionInput): Promise<void> => {
+    await getAutoScalingClient().send(
+      new PutScheduledUpdateGroupActionCommand({
+        AutoScalingGroupName: input.asgName,
+        ScheduledActionName: input.name,
+        Recurrence: input.recurrence,
+        ...(input.minSize != null ? { MinSize: input.minSize } : {}),
+        ...(input.maxSize != null ? { MaxSize: input.maxSize } : {}),
+        ...(input.desiredCapacity != null ? { DesiredCapacity: input.desiredCapacity } : {}),
+      }),
+    );
+  },
+
+  deleteScheduledAction: async (asgName: string, name: string): Promise<void> => {
+    await getAutoScalingClient().send(
+      new DeleteScheduledActionCommand({
+        AutoScalingGroupName: asgName,
+        ScheduledActionName: name,
+      }),
     );
   },
 };

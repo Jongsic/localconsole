@@ -14,7 +14,14 @@ import { cn } from "@/lib/utils";
 import { useToast } from "./toast";
 import { Button, Modal, Spinner } from "./ui";
 
-type Section = "versioning" | "tagging" | "encryption" | "website" | "cors" | "policy";
+type Section =
+  | "versioning"
+  | "tagging"
+  | "encryption"
+  | "website"
+  | "cors"
+  | "policy"
+  | "lifecycle";
 const SECTION_KEYS: Section[] = [
   "versioning",
   "tagging",
@@ -22,6 +29,7 @@ const SECTION_KEYS: Section[] = [
   "website",
   "cors",
   "policy",
+  "lifecycle",
 ];
 
 function CopyButton({ text }: { text: string }) {
@@ -137,6 +145,8 @@ function SectionEditor({
       return <JsonEditor bucket={bucket} kind="cors" current={data.cors.json} />;
     case "policy":
       return <JsonEditor bucket={bucket} kind="policy" current={data.policy.document} />;
+    case "lifecycle":
+      return <JsonEditor bucket={bucket} kind="lifecycle" current={data.lifecycle.json} />;
   }
 }
 
@@ -416,13 +426,24 @@ const POLICY_EXAMPLE = `{
   ]
 }`;
 
+const LIFECYCLE_EXAMPLE = `[
+  { "ID": "expire-temp", "Filter": { "Prefix": "temp/" }, "Status": "Enabled", "Expiration": { "Days": 1 } },
+  { "ID": "abort-mpu", "Filter": { "Prefix": "" }, "Status": "Enabled", "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 } }
+]`;
+
+const JSON_EXAMPLES: Record<"cors" | "policy" | "lifecycle", string> = {
+  cors: CORS_EXAMPLE,
+  policy: POLICY_EXAMPLE,
+  lifecycle: LIFECYCLE_EXAMPLE,
+};
+
 function JsonEditor({
   bucket,
   kind,
   current,
 }: {
   bucket: string;
-  kind: "cors" | "policy";
+  kind: "cors" | "policy" | "lifecycle";
   current: string | null;
 }) {
   const { t } = useTranslation();
@@ -430,13 +451,14 @@ function JsonEditor({
   const [text, setText] = useState(current ?? "");
   useEffect(() => setText(current ?? ""), [current]);
 
-  const example = kind === "cors" ? CORS_EXAMPLE : POLICY_EXAMPLE;
+  const example = JSON_EXAMPLES[kind];
 
   const handleSave = () => {
-    if (kind === "cors") {
-      save.mutate({ section: "cors", value: { json: text.trim() ? text : null } });
+    const value = text.trim() ? text : null;
+    if (kind === "policy") {
+      save.mutate({ section: "policy", value: { document: value } });
     } else {
-      save.mutate({ section: "policy", value: { document: text.trim() ? text : null } });
+      save.mutate({ section: kind, value: { json: value } });
     }
   };
 

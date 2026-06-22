@@ -12,9 +12,9 @@ import { LanguageSwitch } from "./language-switch";
 const TABS: { href: string; label: string; section: Section; comingSoon: boolean }[] = [
   { href: "/s3", label: "S3", section: "s3", comingSoon: false },
   { href: "/compute", label: "Compute", section: "compute", comingSoon: false },
-  { href: "/vpc", label: "VPC", section: "vpc", comingSoon: true },
-  { href: "/db", label: "DB/Cache", section: "db", comingSoon: true },
-  { href: "/function", label: "Function", section: "function", comingSoon: true },
+  { href: "/vpc", label: "VPC", section: "vpc", comingSoon: false },
+  { href: "/db", label: "DB/Cache", section: "db", comingSoon: false },
+  { href: "/function", label: "Function", section: "function", comingSoon: false },
   { href: "/iam", label: "IAM", section: "iam", comingSoon: false },
 ];
 

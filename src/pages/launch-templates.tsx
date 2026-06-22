@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LayoutTemplate } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,17 +15,43 @@ import {
   Tr,
 } from "@/components/kit";
 import { ResizableBottomPanel } from "@/components/resizable-bottom-panel";
+import { useToast } from "@/components/toast";
+import { Button, Field, Modal, Select, TextInput } from "@/components/ui";
 import { api } from "@/lib/ec2-api";
 import type { Ec2LaunchTemplateSummary } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+
+const INSTANCE_TYPES = [
+  "t2.micro",
+  "t2.small",
+  "t3.micro",
+  "t3.small",
+  "t3.medium",
+  "m5.large",
+  "c5.large",
+];
 
 export function LaunchTemplatesPage() {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
+  const toast = useToast();
   const [selected, setSelected] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Ec2LaunchTemplateSummary | null>(null);
 
   const templates = useQuery({ queryKey: ["launch-templates"], queryFn: api.listLaunchTemplates });
   const current = templates.data?.find((lt) => lt.launchTemplateId === selected) ?? null;
+
+  const del = useMutation({
+    mutationFn: (id: string) => api.deleteLaunchTemplate(id),
+    onSuccess: (_d, id) => {
+      toast.success(t("lt.deleted"));
+      qc.invalidateQueries({ queryKey: ["launch-templates"] });
+      if (selected === id) setSelected(null);
+      setDeleteTarget(null);
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
 
   return (
     <div className="flex h-full flex-col">
@@ -36,6 +62,11 @@ export function LaunchTemplatesPage() {
         onRefresh={() => qc.invalidateQueries({ queryKey: ["launch-templates"] })}
         refreshing={templates.isFetching}
         refreshTitle={t("common.refresh")}
+        actions={
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" /> {t("lt.create")}
+          </Button>
+        }
       />
 
       <div className="flex-1 overflow-auto">
@@ -54,6 +85,7 @@ export function LaunchTemplatesPage() {
               <Th>{t("lt.col.default")}</Th>
               <Th>{t("lt.col.latest")}</Th>
               <Th>{t("lt.col.created")}</Th>
+              <Th />
             </tr>
           }
           row={(lt: Ec2LaunchTemplateSummary) => (
@@ -67,6 +99,19 @@ export function LaunchTemplatesPage() {
               <Td>{lt.defaultVersionNumber ?? "—"}</Td>
               <Td>{lt.latestVersionNumber ?? "—"}</Td>
               <Td muted>{formatDate(lt.createTime, i18n.language)}</Td>
+              <Td className="text-right">
+                <button
+                  type="button"
+                  title={t("common.delete")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(lt);
+                  }}
+                  className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </Td>
             </Tr>
           )}
         />
@@ -80,7 +125,147 @@ export function LaunchTemplatesPage() {
           onClose={() => setSelected(null)}
         />
       )}
+
+      <CreateTemplateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      <Modal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title={t("lt.deleteTitle")}
+      >
+        <div className="flex flex-col gap-3 text-sm">
+          <p>{t("lt.deleteConfirm", { name: deleteTarget?.launchTemplateName })}</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="danger"
+              loading={del.isPending}
+              onClick={() => deleteTarget && del.mutate(deleteTarget.launchTemplateId)}
+            >
+              {t("common.delete")}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
+  );
+}
+
+function CreateTemplateModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [imageId, setImageId] = useState("ami-0abcdef1234567890");
+  const [instanceType, setInstanceType] = useState("t3.micro");
+  const [keyName, setKeyName] = useState("");
+  const [securityGroupIds, setSecurityGroupIds] = useState<string[]>([]);
+
+  const keyPairs = useQuery({ queryKey: ["key-pairs"], queryFn: api.listKeyPairs, enabled: open });
+  const sgs = useQuery({
+    queryKey: ["security-groups"],
+    queryFn: api.listSecurityGroups,
+    enabled: open,
+  });
+
+  const toggleSg = (id: string) =>
+    setSecurityGroupIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+
+  const create = useMutation({
+    mutationFn: () =>
+      api.createLaunchTemplate({
+        name: name.trim(),
+        imageId: imageId.trim(),
+        instanceType: instanceType.trim(),
+        keyName: keyName.trim() || undefined,
+        securityGroupIds,
+      }),
+    onSuccess: () => {
+      toast.success(t("lt.created", { name }));
+      qc.invalidateQueries({ queryKey: ["launch-templates"] });
+      setName("");
+      setSecurityGroupIds([]);
+      onClose();
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <Modal open={open} onClose={onClose} title={t("lt.createTitle")} className="max-w-md">
+      <div className="flex flex-col gap-3">
+        <Field label={t("lt.name")}>
+          <TextInput
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="my-template"
+            autoComplete="off"
+          />
+        </Field>
+        <Field label={t("lt.field.ami")}>
+          <TextInput value={imageId} onChange={(e) => setImageId(e.target.value)} />
+        </Field>
+        <Field label={t("lt.field.instanceType")}>
+          <Select value={instanceType} onChange={(e) => setInstanceType(e.target.value)}>
+            {INSTANCE_TYPES.map((it) => (
+              <option key={it} value={it}>
+                {it}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t("lt.field.keyName")}>
+          <Select value={keyName} onChange={(e) => setKeyName(e.target.value)}>
+            <option value="">{t("ec2.launch.none")}</option>
+            {(keyPairs.data ?? []).map((k) => (
+              <option key={k.keyName} value={k.keyName}>
+                {k.keyName}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t("lt.field.securityGroups")}>
+          <div className="max-h-32 overflow-auto rounded-md border border-slate-300 bg-white p-1.5">
+            {(sgs.data ?? []).length === 0 ? (
+              <p className="px-1 py-1 text-xs text-slate-500">{t("lt.noSecurityGroups")}</p>
+            ) : (
+              (sgs.data ?? []).map((g) => (
+                <label
+                  key={g.groupId}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors hover:bg-slate-50",
+                    securityGroupIds.includes(g.groupId) && "bg-brand-fg hover:bg-brand-tint",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={securityGroupIds.includes(g.groupId)}
+                    onChange={() => toggleSg(g.groupId)}
+                  />
+                  <span className="font-medium text-slate-800">{g.groupName}</span>
+                  <span className="font-mono text-slate-500">{g.groupId}</span>
+                </label>
+              ))
+            )}
+          </div>
+        </Field>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            loading={create.isPending}
+            disabled={!name.trim() || !imageId.trim() || !instanceType.trim()}
+            onClick={() => create.mutate()}
+          >
+            {t("common.create")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

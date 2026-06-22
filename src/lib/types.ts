@@ -88,6 +88,7 @@ export type BucketProperties = {
   encryption: { enabled: boolean; algorithm: "AES256" | "aws:kms" | null };
   cors: { json: string | null };
   policy: { document: string | null };
+  lifecycle: { json: string | null };
   website: WebsiteConfig;
 };
 
@@ -97,6 +98,7 @@ export type UpdatePropertyInput =
   | { section: "encryption"; value: { enabled: boolean; algorithm?: "AES256" | "aws:kms" | null } }
   | { section: "cors"; value: { json: string | null } }
   | { section: "policy"; value: { document: string | null } }
+  | { section: "lifecycle"; value: { json: string | null } }
   | {
       section: "website";
       value: { enabled: boolean; indexDocument?: string; errorDocument?: string };
@@ -439,6 +441,29 @@ export type AsgCapacityInput = {
   desiredCapacity: number;
 };
 
+/** Target-tracking predefined metric supported by the policy form */
+export type AsgPredefinedMetric = "ASGAverageCPUUtilization" | "ALBRequestCountPerTarget";
+
+/** Input for a target-tracking scaling policy (PutScalingPolicy) */
+export type PutScalingPolicyInput = {
+  asgName: string;
+  policyName: string;
+  metricType: AsgPredefinedMetric;
+  targetValue: number;
+  /** Required by AWS for ALBRequestCountPerTarget; optional in the UI */
+  resourceLabel?: string;
+};
+
+/** Input for a scheduled action (PutScheduledUpdateGroupAction) */
+export type PutScheduledActionInput = {
+  asgName: string;
+  name: string;
+  recurrence: string;
+  minSize?: number;
+  maxSize?: number;
+  desiredCapacity?: number;
+};
+
 /* ── Launch templates ── */
 
 export type Ec2LaunchTemplateSummary = {
@@ -469,6 +494,25 @@ export type Ec2LaunchTemplateVersionDetail = {
   }[];
 };
 
+/** Input for creating a launch template (CreateLaunchTemplate, minimal LaunchTemplateData) */
+export type CreateLaunchTemplateInput = {
+  name: string;
+  imageId: string;
+  instanceType: string;
+  keyName?: string;
+  securityGroupIds?: string[];
+};
+
+/** Input for creating an EBS volume (CreateVolume) */
+export type CreateVolumeInput = {
+  availabilityZone: string;
+  /** Size in GiB */
+  size: number;
+  volumeType: string;
+  iops?: number;
+  encrypted: boolean;
+};
+
 /** Input for launching new instances (RunInstances) */
 export type Ec2LaunchInput = {
   imageId: string;
@@ -481,6 +525,165 @@ export type Ec2LaunchInput = {
   subnetId?: string;
   /** IAM instance profile name to attach (IamInstanceProfile.Name) */
   iamInstanceProfileName?: string;
+};
+
+/* ── VPC domain types ── */
+
+/** An IPv4 CIDR block associated with a VPC (CidrBlockAssociationSet) */
+export type VpcCidrAssociation = { cidrBlock: string; state: string | null };
+
+/** An IPv6 CIDR block associated with a VPC (Ipv6CidrBlockAssociationSet) */
+export type VpcIpv6CidrAssociation = { ipv6CidrBlock: string; state: string | null };
+
+/** Row in the VPCs table */
+export type VpcSummary = {
+  vpcId: string;
+  cidrBlock: string | null;
+  state: string | null;
+  isDefault: boolean;
+  /** Value of the "Name" tag, if any */
+  name: string | null;
+  /** Raw tags, for the detail-panel editor */
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  ownerId: string | null;
+  /** default | dedicated | host */
+  instanceTenancy: string | null;
+  dhcpOptionsId: string | null;
+  /** All IPv4 CIDR associations (includes the primary cidrBlock) */
+  cidrAssociations: VpcCidrAssociation[];
+  ipv6CidrAssociations: VpcIpv6CidrAssociation[];
+};
+
+/** Row in the Subnets table */
+export type SubnetSummary = {
+  subnetId: string;
+  vpcId: string | null;
+  cidrBlock: string | null;
+  availabilityZone: string | null;
+  availableIpCount: number | null;
+  state: string | null;
+  name: string | null;
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  ownerId: string | null;
+  availabilityZoneId: string | null;
+  defaultForAz: boolean;
+  mapPublicIpOnLaunch: boolean;
+  assignIpv6AddressOnCreation: boolean;
+  /** IPv6 CIDR blocks associated with the subnet */
+  ipv6CidrBlocks: string[];
+  enableDns64: boolean;
+};
+
+export type CreateSubnetInput = {
+  vpcId: string;
+  cidrBlock: string;
+  availabilityZone?: string;
+};
+
+/** A subnet/gateway association within a route table (RouteTable.Associations) */
+export type RouteTableAssociation = {
+  subnetId: string | null;
+  main: boolean;
+  state: string | null;
+};
+
+/** A single route within a route table */
+export type RouteEntry = {
+  /** Destination CIDR (IPv4/IPv6) or prefix-list id */
+  destination: string;
+  /** Resolved target (gateway / nat / instance / eni / "local" …) */
+  target: string;
+  state: string | null;
+};
+
+/** Row in the Route tables table */
+export type RouteTableSummary = {
+  routeTableId: string;
+  vpcId: string | null;
+  /** True when this is the VPC's main route table */
+  main: boolean;
+  /** Number of subnet/gateway associations */
+  associationCount: number;
+  routes: RouteEntry[];
+  name: string | null;
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  ownerId: string | null;
+  /** Subnet/gateway associations (detail of the count) */
+  associations: RouteTableAssociation[];
+  /** Propagating virtual private gateway ids */
+  propagatingVgws: string[];
+};
+
+export type CreateRouteInput = {
+  routeTableId: string;
+  destinationCidrBlock: string;
+  gatewayId: string;
+};
+
+/** Row in the Internet gateways table */
+export type InternetGatewaySummary = {
+  internetGatewayId: string;
+  attachments: { vpcId: string; state: string | null }[];
+  name: string | null;
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  ownerId: string | null;
+};
+
+/** A NAT gateway address binding (NatGateway.NatGatewayAddresses) */
+export type NatGatewayAddress = {
+  publicIp: string | null;
+  privateIp: string | null;
+  allocationId: string | null;
+  networkInterfaceId: string | null;
+};
+
+/** Row in the NAT gateways table */
+export type NatGatewaySummary = {
+  natGatewayId: string;
+  subnetId: string | null;
+  vpcId: string | null;
+  state: string | null;
+  /** public | private */
+  type: string | null;
+  publicIp: string | null;
+  name: string | null;
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  createdTime: string | null;
+  deleteTime: string | null;
+  failureMessage: string | null;
+  /** All address bindings (the list shows only the first public IP) */
+  addresses: NatGatewayAddress[];
+};
+
+export type CreateNatGatewayInput = {
+  subnetId: string;
+  connectivityType: "public" | "private";
+  /** Required for public NAT gateways; omitted for private */
+  allocationId?: string;
+};
+
+/** Row in the Elastic IPs table (DescribeAddresses) */
+export type ElasticIpSummary = {
+  allocationId: string;
+  publicIp: string | null;
+  /** vpc | standard */
+  domain: string | null;
+  /** Resource the EIP is associated with, or null when unassociated */
+  association: {
+    instanceId: string | null;
+    networkInterfaceId: string | null;
+    privateIpAddress: string | null;
+  } | null;
+  name: string | null;
+  tags: Tag[];
+  /* ── detail-panel-only fields (not shown in the list) ── */
+  networkBorderGroup: string | null;
+  publicIpv4Pool: string | null;
 };
 
 /* ── IAM domain types ── */
@@ -566,4 +769,188 @@ export type IamPolicyDetail = {
   updateDate: string | null;
   /** Default-version policy document (JSON string, URL-decoded), or null */
   document: string | null;
+};
+
+/* ── RDS ── */
+
+/** Row in the DB clusters table (DescribeDBClusters) */
+export type DbClusterSummary = {
+  dbClusterIdentifier: string;
+  engine: string | null;
+  engineVersion: string | null;
+  status: string | null;
+  endpoint: string | null;
+  multiAZ: boolean;
+  /** ARN, needed for the tagging APIs */
+  arn: string | null;
+  /** Reader endpoint (Aurora) */
+  readerEndpoint: string | null;
+  port: number | null;
+  availabilityZones: string[];
+  storageEncrypted: boolean;
+  parameterGroup: string | null;
+  backupRetentionPeriod: number | null;
+  preferredBackupWindow: string | null;
+  preferredMaintenanceWindow: string | null;
+  createdTime: string | null;
+  /** Member DB instance identifiers, with role flag */
+  members: { dbInstanceIdentifier: string; isWriter: boolean }[];
+};
+
+/** Input for creating a DB cluster (CreateDBCluster) */
+export type CreateDbClusterInput = {
+  dbClusterIdentifier: string;
+  engine: string;
+  engineVersion?: string;
+  masterUsername: string;
+  masterUserPassword: string;
+};
+
+/** Row in the DB instances table (DescribeDBInstances) */
+export type DbInstanceSummary = {
+  dbInstanceIdentifier: string;
+  engine: string | null;
+  engineVersion: string | null;
+  dbInstanceClass: string | null;
+  status: string | null;
+  endpoint: string | null;
+  port: number | null;
+  allocatedStorage: number | null;
+  storageType: string | null;
+  storageEncrypted: boolean;
+  multiAZ: boolean;
+  availabilityZone: string | null;
+  publiclyAccessible: boolean;
+  parameterGroup: string | null;
+  backupRetentionPeriod: number | null;
+  preferredBackupWindow: string | null;
+  preferredMaintenanceWindow: string | null;
+  createdTime: string | null;
+  /** ARN, needed for the tagging APIs */
+  arn: string | null;
+};
+
+/** Input for creating a DB instance (CreateDBInstance) */
+export type CreateDbInstanceInput = {
+  dbInstanceIdentifier: string;
+  engine: string;
+  dbInstanceClass: string;
+  allocatedStorage: number;
+  masterUsername: string;
+  masterUserPassword: string;
+};
+
+/* ── ElastiCache ── */
+
+/** Row in the cache clusters table (DescribeCacheClusters) */
+export type CacheClusterSummary = {
+  cacheClusterId: string;
+  engine: string | null;
+  engineVersion: string | null;
+  status: string | null;
+  nodeType: string | null;
+  numCacheNodes: number | null;
+  endpoint: string | null;
+  port: number | null;
+  /** ARN, needed for the tagging APIs */
+  arn: string | null;
+  parameterGroup: string | null;
+  subnetGroup: string | null;
+  securityGroups: string[];
+  preferredMaintenanceWindow: string | null;
+  snapshotRetentionLimit: number | null;
+  snapshotWindow: string | null;
+  availabilityZone: string | null;
+  createdTime: string | null;
+};
+
+/** Input for creating a cache cluster (CreateCacheCluster) */
+export type CreateCacheClusterInput = {
+  cacheClusterId: string;
+  engine: string;
+  cacheNodeType: string;
+  numCacheNodes: number;
+};
+
+/** Flattened cache node across clusters (DescribeCacheClusters ShowCacheNodeInfo) */
+export type CacheNodeSummary = {
+  cacheClusterId: string;
+  cacheNodeId: string;
+  status: string | null;
+  address: string | null;
+  port: number | null;
+  availabilityZone: string | null;
+};
+
+/* ── Lambda ── */
+
+/** Row in the functions table (ListFunctions) */
+export type LambdaFunctionSummary = {
+  functionName: string;
+  runtime: string | null;
+  handler: string | null;
+  memorySize: number | null;
+  timeout: number | null;
+  /** Deployment package size in bytes */
+  codeSize: number | null;
+  lastModified: string | null;
+  architectures: string[];
+  /** Zip | Image */
+  packageType: string | null;
+};
+
+/** Function configuration detail (GetFunctionConfiguration, plus optional code URL) */
+export type LambdaFunctionDetail = {
+  functionName: string;
+  runtime: string | null;
+  handler: string | null;
+  memorySize: number | null;
+  timeout: number | null;
+  codeSize: number | null;
+  lastModified: string | null;
+  architectures: string[];
+  packageType: string | null;
+  role: string | null;
+  description: string | null;
+  /** Function lifecycle State (Active/Pending/Failed/Inactive) */
+  state: string | null;
+  /** Status of the last update (Successful/Failed/InProgress) */
+  lastUpdateStatus: string | null;
+  /** Environment variables, as a flat record */
+  environment: Record<string, string>;
+  /** Pre-signed deployment package URL (Code.Location), when available */
+  codeLocation: string | null;
+};
+
+/** Input for creating a function (CreateFunction). `code` is a raw zip's bytes. */
+export type CreateFunctionInput = {
+  functionName: string;
+  runtime: string;
+  handler: string;
+  /** Execution role ARN */
+  role: string;
+  /** Deployment package bytes (a zip), passed as Code.ZipFile */
+  code: Uint8Array;
+  memorySize?: number;
+  timeout?: number;
+  description?: string;
+  environment?: Record<string, string>;
+};
+
+/** Editable configuration fields (UpdateFunctionConfiguration) */
+export type UpdateFunctionConfigInput = {
+  functionName: string;
+  memorySize?: number;
+  timeout?: number;
+  handler?: string;
+  description?: string;
+};
+
+/** Row in the layers table (ListLayers) */
+export type LambdaLayerSummary = {
+  layerName: string;
+  latestVersion: number | null;
+  latestVersionArn: string | null;
+  compatibleRuntimes: string[];
+  createdDate: string | null;
 };

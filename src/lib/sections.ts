@@ -8,6 +8,7 @@ import {
   KeyRound,
   Layers,
   LayoutTemplate,
+  MapPin,
   Network,
   Route,
   ScrollText,
@@ -43,16 +44,17 @@ export const COMPUTE_ITEMS: SubNavItem[] = [
 ];
 
 export const VPC_ITEMS: SubNavItem[] = [
-  { path: "vpcs", labelKey: "vpc.vpcs", icon: Network, comingSoon: true },
-  { path: "subnets", labelKey: "vpc.subnets", icon: Boxes, comingSoon: true },
-  { path: "route-tables", labelKey: "vpc.routeTables", icon: Route, comingSoon: true },
+  { path: "vpcs", labelKey: "vpc.vpcs", icon: Network, comingSoon: false },
+  { path: "subnets", labelKey: "vpc.subnets", icon: Boxes, comingSoon: false },
+  { path: "route-tables", labelKey: "vpc.routeTables", icon: Route, comingSoon: false },
   {
     path: "internet-gateways",
     labelKey: "vpc.internetGateways",
     icon: Globe,
-    comingSoon: true,
+    comingSoon: false,
   },
-  { path: "nat-gateways", labelKey: "vpc.natGateways", icon: Waypoints, comingSoon: true },
+  { path: "nat-gateways", labelKey: "vpc.natGateways", icon: Waypoints, comingSoon: false },
+  { path: "elastic-ips", labelKey: "vpc.elasticIps", icon: MapPin, comingSoon: false },
 ];
 
 export const DBCACHE_ITEMS: SubNavItem[] = [
@@ -60,28 +62,28 @@ export const DBCACHE_ITEMS: SubNavItem[] = [
     path: "db-clusters",
     labelKey: "dbcache.dbClusters",
     icon: Database,
-    comingSoon: true,
+    comingSoon: false,
     group: "dbcache.rds",
   },
   {
     path: "db-instances",
     labelKey: "dbcache.dbInstances",
     icon: Server,
-    comingSoon: true,
+    comingSoon: false,
     group: "dbcache.rds",
   },
   {
     path: "cache-clusters",
     labelKey: "dbcache.cacheClusters",
     icon: Layers,
-    comingSoon: true,
+    comingSoon: false,
     group: "dbcache.cache",
   },
   {
     path: "cache-nodes",
     labelKey: "dbcache.cacheNodes",
     icon: Cpu,
-    comingSoon: true,
+    comingSoon: false,
     group: "dbcache.cache",
   },
 ];
@@ -98,6 +100,6 @@ export const IAM_ITEMS: SubNavItem[] = [
 ];
 
 export const FUNCTION_ITEMS: SubNavItem[] = [
-  { path: "functions", labelKey: "function.functions", icon: Zap, comingSoon: true },
-  { path: "layers", labelKey: "function.layers", icon: Layers, comingSoon: true },
+  { path: "functions", labelKey: "function.functions", icon: Zap, comingSoon: false },
+  { path: "layers", labelKey: "function.layers", icon: Layers, comingSoon: false },
 ];

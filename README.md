@@ -28,15 +28,23 @@ settings live in your browser's `localStorage`.
     (key pair, security groups, subnet pickers), start / stop / reboot / terminate, edit
     (tags, instance type, security groups, termination & stop protection), IMDSv2 / user data view
   - **Security groups** — list + detail page, create / delete, inbound/outbound rule add / remove
-  - **Volumes** (EBS), **Key pairs** (create / import / delete), **Launch templates**
+  - **Volumes** (EBS), **Key pairs** (create / import / delete), **Launch templates** (create / delete)
   - **Load balancers** (ALB/NLB) — detail page with attributes, tags, listeners (create / delete),
     and per-listener rules (priority / path / host conditions)
   - **Target groups** — create / delete, register / deregister targets, health-check + stickiness
     + algorithm editing, tags
   - **Auto Scaling groups** — create / delete, capacity edit, scaling policies & scheduled actions
+- 🌐 **VPC** — VPCs, subnets, route tables (+ routes), internet gateways (attach / detach), NAT
+  gateways (public / private), and Elastic IPs — list / create / delete with a tags + attributes
+  detail panel on each
+- 🗄️ **DB/Cache** — RDS DB clusters & instances and ElastiCache cache clusters & nodes
+  (Memcached / Redis / Valkey) — list / create / delete with a tags + properties detail panel
+- 🧩 **Function** — Lambda functions (create from inline-zipped code, detail page with config /
+  code / env) and layers
+- 🔑 **IAM** — roles (detail with attached & inline policies, trust policy), instance profiles,
+  and policies (managed + customer, searchable, with policy-document view)
 - 🛟 Graceful degradation — anything a backend doesn't implement shows a calm "not supported"
   state instead of an error; permission/CORS errors are surfaced, not hidden
-- 🚧 VPC, DB/Cache (RDS/ElastiCache), and Function (Lambda) sections are scaffolded (coming soon)
 
 ## Architecture: why browser-only
 
@@ -53,9 +61,9 @@ from the app's origin (see below).
 ## Backend support
 
 OpenConsole talks to any AWS-compatible endpoint via the AWS SDK. A small registry decides which
-**top-level sections** (S3, Compute, VPC, DB/Cache, Function) to open per backend; anything a backend
-can't actually do is handled gracefully at runtime (shown as a quiet "not supported" state) rather
-than enumerated up front.
+**top-level sections** (S3, Compute, VPC, DB/Cache, Function, IAM) to open per backend; anything a
+backend can't actually do is handled gracefully at runtime (shown as a quiet "not supported" state)
+rather than enumerated up front.
 
 | Backend | Detected by | Sections opened | Notes |
 | --- | --- | --- | --- |
@@ -75,7 +83,7 @@ detection or section gating:
 "mybackend": {
   "label": "My Backend",
   "detect": { "healthPath": "/health", "ports": [1234], "jsonKey": "optionalRequiredKey" },
-  "sections": ["s3", "compute", "vpc", "db", "function"]
+  "sections": ["s3", "compute", "vpc", "db", "function", "iam"]
 }
 ```
 
@@ -95,6 +103,12 @@ Browser requests are subject to CORS. By default backends do **not** allow this 
 EXTRA_CORS_ALLOWED_ORIGINS=http://localhost:3939
 # or, for local dev convenience:
 DISABLE_CORS_CHECKS=1
+```
+
+**Floci** — set the canonical key (the `EXTRA_CORS_ALLOWED_ORIGINS` alias is not bound):
+
+```bash
+FLOCI_SECURITY_EXTRA_CORS_ALLOWED_ORIGINS=http://localhost:3939
 ```
 
 **MinIO** — configure CORS / allowed origins on the server.
@@ -206,7 +220,9 @@ No secrets are needed for **CI** (`ci.yml`) — it only lints, type-checks, test
 ## Stack
 
 React 18 + Vite, TypeScript (strict), Tailwind CSS, TanStack Query, Zustand, Zod,
-react-router, react-i18next, `@aws-sdk/client-s3`, Biome. Tested with Vitest, CI via GitHub Actions.
+react-router, react-i18next, Biome, and the AWS SDK v3 clients (`s3`, `ec2`,
+`elastic-load-balancing-v2`, `auto-scaling`, `iam`, `rds`, `elasticache`, `lambda`).
+Tested with Vitest, CI via GitHub Actions.
 
 ## Disclaimer
 

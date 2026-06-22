@@ -49,7 +49,196 @@
     "subnets": "Subnets",
     "routeTables": "Route tables",
     "internetGateways": "Internet gateways",
-    "natGateways": "NAT gateways"
+    "natGateways": "NAT gateways",
+    "vpc": {
+      "heading": "Your VPCs",
+      "none": "No VPCs",
+      "create": "Create VPC",
+      "createTitle": "Create VPC",
+      "created": "VPC created",
+      "deleted": "VPC deleted",
+      "deleteTitle": "Delete VPC",
+      "deleteConfirm": "Delete VPC \"{{id}}\"?",
+      "col": {
+        "name": "Name",
+        "id": "VPC ID",
+        "cidr": "CIDR block",
+        "state": "State",
+        "default": "Default"
+      },
+      "detail": {
+        "title": "VPC details",
+        "ownerId": "Owner ID",
+        "tenancy": "Instance tenancy",
+        "dhcpOptions": "DHCP options set",
+        "cidrAssociations": "IPv4 CIDR associations",
+        "ipv6CidrAssociations": "IPv6 CIDR associations",
+        "none": "None"
+      }
+    },
+    "subnet": {
+      "heading": "Subnets",
+      "none": "No subnets",
+      "create": "Create subnet",
+      "createTitle": "Create subnet",
+      "created": "Subnet created",
+      "deleted": "Subnet deleted",
+      "deleteTitle": "Delete subnet",
+      "deleteConfirm": "Delete subnet \"{{id}}\"?",
+      "pickVpc": "Select a VPC…",
+      "azOptional": "Availability zone (optional)",
+      "col": {
+        "name": "Name",
+        "id": "Subnet ID",
+        "vpc": "VPC ID",
+        "cidr": "CIDR block",
+        "az": "AZ",
+        "availableIps": "Available IPs",
+        "state": "State"
+      },
+      "detail": {
+        "title": "Subnet details",
+        "ownerId": "Owner ID",
+        "azId": "AZ ID",
+        "defaultForAz": "Default for AZ",
+        "mapPublicIp": "Auto-assign public IPv4",
+        "assignIpv6": "Auto-assign IPv6",
+        "ipv6Cidr": "IPv6 CIDR",
+        "enableDns64": "DNS64"
+      },
+      "vpcCidr": "VPC CIDR",
+      "cidrOutOfRange": "CIDR must be within the selected VPC ({{cidr}})."
+    },
+    "rt": {
+      "heading": "Route tables",
+      "none": "No route tables",
+      "create": "Create route table",
+      "createTitle": "Create route table",
+      "created": "Route table created",
+      "deleted": "Route table deleted",
+      "deleteTitle": "Delete route table",
+      "deleteConfirm": "Delete route table \"{{id}}\"?",
+      "pickVpc": "Select a VPC…",
+      "addRoute": "Add route",
+      "routeAdded": "Route added",
+      "routeRemoved": "Route removed",
+      "col": {
+        "name": "Name",
+        "id": "Route table ID",
+        "vpc": "VPC ID",
+        "main": "Main",
+        "routes": "Routes",
+        "associations": "Associations"
+      },
+      "route": {
+        "destination": "Destination",
+        "target": "Target",
+        "state": "State",
+        "none": "No routes"
+      },
+      "detail": {
+        "title": "Route table details",
+        "ownerId": "Owner ID",
+        "associations": "Associations",
+        "associationSubnet": "Subnet",
+        "associationMain": "Main",
+        "associationState": "State",
+        "noAssociations": "No associations",
+        "propagatingVgws": "Propagating VGWs"
+      },
+      "routes": "Routes"
+    },
+    "igw": {
+      "heading": "Internet gateways",
+      "none": "No internet gateways",
+      "create": "Create internet gateway",
+      "created": "Internet gateway created",
+      "deleted": "Internet gateway deleted",
+      "deleteTitle": "Delete internet gateway",
+      "deleteConfirm": "Delete internet gateway \"{{id}}\"?",
+      "attach": "Attach to VPC",
+      "attachTitle": "Attach internet gateway",
+      "attached": "Internet gateway attached",
+      "detach": "Detach from VPC",
+      "detached": "Internet gateway detached",
+      "pickVpc": "Select a VPC…",
+      "col": {
+        "name": "Name",
+        "id": "Gateway ID",
+        "attachedVpc": "Attached VPC",
+        "state": "State"
+      },
+      "detail": {
+        "title": "Internet gateway details",
+        "ownerId": "Owner ID"
+      }
+    },
+    "nat": {
+      "heading": "NAT gateways",
+      "none": "No NAT gateways",
+      "create": "Create NAT gateway",
+      "createTitle": "Create NAT gateway",
+      "created": "NAT gateway created",
+      "deleted": "NAT gateway deleted",
+      "deleteTitle": "Delete NAT gateway",
+      "deleteConfirm": "Delete NAT gateway \"{{id}}\"?",
+      "pickSubnet": "Select a subnet…",
+      "allocationId": "Elastic IP allocation ID",
+      "allocationHint": "An allocated Elastic IP (eipalloc-…) is required for a public NAT gateway.",
+      "col": {
+        "name": "Name",
+        "id": "NAT gateway ID",
+        "subnet": "Subnet ID",
+        "vpc": "VPC ID",
+        "type": "Type",
+        "publicIp": "Public IP",
+        "state": "State"
+      },
+      "detail": {
+        "title": "NAT gateway details",
+        "created": "Created",
+        "deleted": "Deleted",
+        "failureMessage": "Failure message",
+        "addresses": "Addresses",
+        "privateIp": "Private IP",
+        "allocationId": "Allocation ID",
+        "networkInterface": "Network interface"
+      },
+      "pickAllocation": "Select an Elastic IP…",
+      "noAllocations": "No unassociated Elastic IPs — allocate one on the Elastic IPs page first.",
+      "connectivity": "Connectivity",
+      "public": "Public",
+      "private": "Private",
+      "privateHint": "Private NAT gateways have no Elastic IP — they route to other VPCs / on-prem."
+    },
+    "elasticIps": "Elastic IPs",
+    "details": "Details",
+    "eip": {
+      "heading": "Elastic IPs",
+      "none": "No Elastic IPs",
+      "allocate": "Allocate Elastic IP",
+      "allocated": "Elastic IP allocated",
+      "release": "Release",
+      "released": "Elastic IP released",
+      "releaseTitle": "Release Elastic IP",
+      "releaseConfirm": "Release Elastic IP \"{{id}}\"?",
+      "detail": {
+        "title": "Elastic IP details",
+        "networkBorderGroup": "Network border group",
+        "publicIpv4Pool": "Public IPv4 pool",
+        "instanceId": "Instance ID",
+        "networkInterface": "Network interface",
+        "privateIp": "Private IP"
+      },
+      "unassociated": "Unassociated",
+      "col": {
+        "name": "Name",
+        "publicIp": "Public IP",
+        "allocationId": "Allocation ID",
+        "association": "Association",
+        "domain": "Domain"
+      }
+    }
   },
   "dbcache": {
     "section": "DB / Cache",
@@ -58,12 +247,210 @@
     "dbClusters": "DB clusters",
     "dbInstances": "DB instances",
     "cacheClusters": "Cache clusters",
-    "cacheNodes": "Cache nodes"
+    "cacheNodes": "Cache nodes",
+    "cluster": {
+      "heading": "DB clusters",
+      "subtitle": "RDS",
+      "none": "No DB clusters",
+      "create": "Create DB cluster",
+      "createTitle": "Create DB cluster",
+      "created": "DB cluster \"{{id}}\" created",
+      "deleted": "DB cluster \"{{id}}\" deleted",
+      "deleteTitle": "Delete DB cluster",
+      "deleteConfirm": "Delete DB cluster \"{{id}}\"? The final snapshot will be skipped.",
+      "engine": "Engine",
+      "engineVersion": "Engine version (optional)",
+      "masterUsername": "Master username",
+      "masterPassword": "Master password",
+      "members": "Members",
+      "writer": "writer",
+      "reader": "reader",
+      "noMembers": "No members",
+      "col": {
+        "id": "Identifier",
+        "engine": "Engine",
+        "version": "Version",
+        "status": "Status",
+        "endpoint": "Endpoint",
+        "multiAZ": "Multi-AZ"
+      },
+      "detail": {
+        "readerEndpoint": "Reader endpoint",
+        "port": "Port",
+        "availabilityZones": "Availability zones",
+        "storageEncrypted": "Storage encrypted",
+        "parameterGroup": "Parameter group",
+        "backupRetention": "Backup retention (days)",
+        "backupWindow": "Backup window",
+        "maintenanceWindow": "Maintenance window",
+        "created": "Created",
+        "arn": "ARN"
+      }
+    },
+    "instance": {
+      "heading": "DB instances",
+      "subtitle": "RDS",
+      "none": "No DB instances",
+      "create": "Create DB instance",
+      "createTitle": "Create DB instance",
+      "created": "DB instance \"{{id}}\" created",
+      "deleted": "DB instance \"{{id}}\" deleted",
+      "deleteTitle": "Delete DB instance",
+      "deleteConfirm": "Delete DB instance \"{{id}}\"? The final snapshot will be skipped.",
+      "engine": "Engine",
+      "class": "Instance class",
+      "storage": "Allocated storage (GiB)",
+      "masterUsername": "Master username",
+      "masterPassword": "Master password",
+      "col": {
+        "id": "Identifier",
+        "engine": "Engine",
+        "class": "Class",
+        "status": "Status",
+        "endpoint": "Endpoint",
+        "storage": "Storage",
+        "multiAZ": "Multi-AZ",
+        "az": "AZ"
+      },
+      "detail": {
+        "version": "Engine version",
+        "port": "Port",
+        "storageType": "Storage type",
+        "storageEncrypted": "Storage encrypted",
+        "publiclyAccessible": "Publicly accessible",
+        "parameterGroup": "Parameter group",
+        "backupRetention": "Backup retention (days)",
+        "backupWindow": "Backup window",
+        "maintenanceWindow": "Maintenance window",
+        "created": "Created",
+        "arn": "ARN"
+      }
+    },
+    "cacheCluster": {
+      "heading": "Cache clusters",
+      "subtitle": "ElastiCache",
+      "none": "No cache clusters",
+      "create": "Create cache cluster",
+      "createTitle": "Create cache cluster",
+      "created": "Cache cluster \"{{id}}\" created",
+      "deleted": "Cache cluster \"{{id}}\" deleted",
+      "deleteTitle": "Delete cache cluster",
+      "deleteConfirm": "Delete cache cluster \"{{id}}\"?",
+      "engine": "Engine",
+      "nodeType": "Node type",
+      "numNodes": "Number of nodes",
+      "col": {
+        "id": "Cluster ID",
+        "engine": "Engine",
+        "version": "Version",
+        "status": "Status",
+        "nodeType": "Node type",
+        "nodes": "Nodes",
+        "endpoint": "Endpoint"
+      },
+      "detail": {
+        "port": "Port",
+        "parameterGroup": "Parameter group",
+        "subnetGroup": "Subnet group",
+        "securityGroups": "Security groups",
+        "maintenanceWindow": "Maintenance window",
+        "snapshotRetention": "Snapshot retention (days)",
+        "snapshotWindow": "Snapshot window",
+        "az": "Availability zone",
+        "created": "Created",
+        "arn": "ARN"
+      }
+    },
+    "cacheNode": {
+      "heading": "Cache nodes",
+      "subtitle": "ElastiCache",
+      "none": "No cache nodes",
+      "col": {
+        "cluster": "Cluster",
+        "id": "Node ID",
+        "status": "Status",
+        "address": "Address",
+        "port": "Port",
+        "az": "AZ"
+      }
+    }
   },
   "function": {
     "section": "Function",
     "functions": "Functions",
-    "layers": "Layers"
+    "layers": "Layers",
+    "fn": {
+      "heading": "Functions",
+      "subtitle": "Lambda",
+      "none": "No functions",
+      "notFound": "Function \"{{name}}\" not found",
+      "created": "Function \"{{name}}\" created",
+      "deleted": "Function \"{{name}}\" deleted",
+      "create": "Create function",
+      "createTitle": "Create function",
+      "deleteTitle": "Delete function",
+      "deleteConfirm": "Delete function \"{{name}}\"?",
+      "create_": {
+        "name": "Function name",
+        "runtime": "Runtime",
+        "handler": "Handler",
+        "role": "Execution role",
+        "rolePlaceholder": "Select a role…",
+        "roleManual": "Enter a role ARN manually",
+        "rolePick": "Pick from existing roles",
+        "codeSource": "Code source",
+        "inline": "Inline code",
+        "upload": "Upload .zip",
+        "code": "Code",
+        "zip": "Deployment package (.zip)",
+        "noFile": "Choose a .zip file to upload"
+      },
+      "col": {
+        "name": "Name",
+        "runtime": "Runtime",
+        "memory": "Memory",
+        "timeout": "Timeout",
+        "codeSize": "Code size",
+        "lastModified": "Last modified",
+        "handler": "Handler",
+        "role": "Role",
+        "arch": "Architecture",
+        "packageType": "Package type",
+        "description": "Description",
+        "state": "State",
+        "lastUpdate": "Last update",
+        "codeLocation": "Code location"
+      },
+      "config": {
+        "title": "Configuration",
+        "description": "Edit the function's runtime configuration.",
+        "memory": "Memory (MB)",
+        "timeout": "Timeout (seconds)",
+        "handler": "Handler",
+        "fnDescription": "Description",
+        "saved": "Configuration saved",
+        "save": "Save configuration"
+      },
+      "env": {
+        "title": "Environment variables",
+        "description": "Key/value pairs passed to the function at runtime.",
+        "saved": "Environment variables saved"
+      }
+    },
+    "layer": {
+      "heading": "Layers",
+      "subtitle": "Lambda",
+      "none": "No layers",
+      "deleted": "Layer version deleted",
+      "deleteTitle": "Delete layer version",
+      "deleteConfirm": "Delete version {{version}} of layer \"{{name}}\"?",
+      "col": {
+        "name": "Name",
+        "latestVersion": "Latest version",
+        "runtimes": "Compatible runtimes",
+        "created": "Created"
+      }
+    }
   },
   "iam": {
     "section": "IAM",
@@ -305,7 +692,8 @@
       "encryption": "Encryption",
       "website": "Static website",
       "cors": "CORS",
-      "policy": "Bucket policy"
+      "policy": "Bucket policy",
+      "lifecycle": "Lifecycle"
     },
     "versioning": {
       "label": "Versioning",
@@ -340,6 +728,11 @@
     "policy": {
       "label": "Bucket policy",
       "hint": "Bucket policy document (JSON). Apply empty to remove the policy.",
+      "fillExample": "Fill example"
+    },
+    "lifecycle": {
+      "label": "Lifecycle rules",
+      "hint": "Lifecycle Rules array (JSON). Apply empty to remove all rules.",
       "fillExample": "Fill example"
     }
   },
@@ -610,13 +1003,32 @@
       "recurrence": "Recurrence",
       "capacity": "Min / Desired / Max",
       "start": "Start time"
-    }
+    },
+    "addPolicy": "Add scaling policy",
+    "policyAdded": "Scaling policy added",
+    "policyDeleted": "Scaling policy deleted",
+    "addScheduled": "Add scheduled action",
+    "scheduledAdded": "Scheduled action added",
+    "scheduledDeleted": "Scheduled action deleted",
+    "metric": {
+      "cpu": "Average CPU utilization",
+      "albRequests": "ALB request count per target"
+    },
+    "recurrenceHint": "Cron expression (UTC), e.g. 0 9 * * *"
   },
   "lt": {
     "heading": "Launch templates",
     "subtitle": "EC2",
     "none": "No launch templates",
     "defaultVersion": "Default v{{n}}",
+    "create": "Create launch template",
+    "createTitle": "Create launch template",
+    "created": "Launch template \"{{name}}\" created",
+    "deleted": "Launch template deleted",
+    "deleteTitle": "Delete launch template",
+    "deleteConfirm": "Delete launch template \"{{name}}\"?",
+    "name": "Name",
+    "noSecurityGroups": "No security groups",
     "col": {
       "name": "Name",
       "id": "Template ID",
@@ -665,6 +1077,25 @@
     "heading": "Volumes",
     "subtitle": "EBS",
     "none": "No volumes",
+    "create": "Create volume",
+    "createTitle": "Create volume",
+    "created": "Volume created",
+    "deleted": "Volume deleted",
+    "deleteTitle": "Delete volume",
+    "deleteConfirm": "Delete volume \"{{id}}\"?",
+    "detach": "Detach",
+    "detached": "Volume detach requested",
+    "attach": "Attach",
+    "attachTitle": "Attach volume",
+    "attached": "Volume attach requested",
+    "az": "Availability zone",
+    "size": "Size (GiB)",
+    "type": "Volume type",
+    "iops": "IOPS",
+    "encrypted": "Encrypted",
+    "instance": "Instance",
+    "device": "Device name",
+    "pickInstance": "Select instance…",
     "col": {
       "id": "Volume ID",
       "size": "Size",

@@ -49,7 +49,196 @@
     "subnets": "서브넷",
     "routeTables": "라우팅 테이블",
     "internetGateways": "인터넷 게이트웨이",
-    "natGateways": "NAT 게이트웨이"
+    "natGateways": "NAT 게이트웨이",
+    "vpc": {
+      "heading": "VPC 목록",
+      "none": "VPC 없음",
+      "create": "VPC 생성",
+      "createTitle": "VPC 생성",
+      "created": "VPC가 생성되었습니다",
+      "deleted": "VPC가 삭제되었습니다",
+      "deleteTitle": "VPC 삭제",
+      "deleteConfirm": "VPC \"{{id}}\"을(를) 삭제하시겠습니까?",
+      "col": {
+        "name": "이름",
+        "id": "VPC ID",
+        "cidr": "CIDR 블록",
+        "state": "상태",
+        "default": "기본"
+      },
+      "detail": {
+        "title": "VPC 세부 정보",
+        "ownerId": "소유자 ID",
+        "tenancy": "인스턴스 테넌시",
+        "dhcpOptions": "DHCP 옵션 세트",
+        "cidrAssociations": "IPv4 CIDR 연결",
+        "ipv6CidrAssociations": "IPv6 CIDR 연결",
+        "none": "없음"
+      }
+    },
+    "subnet": {
+      "heading": "서브넷",
+      "none": "서브넷 없음",
+      "create": "서브넷 생성",
+      "createTitle": "서브넷 생성",
+      "created": "서브넷이 생성되었습니다",
+      "deleted": "서브넷이 삭제되었습니다",
+      "deleteTitle": "서브넷 삭제",
+      "deleteConfirm": "서브넷 \"{{id}}\"을(를) 삭제하시겠습니까?",
+      "pickVpc": "VPC 선택…",
+      "azOptional": "가용 영역 (선택)",
+      "col": {
+        "name": "이름",
+        "id": "서브넷 ID",
+        "vpc": "VPC ID",
+        "cidr": "CIDR 블록",
+        "az": "AZ",
+        "availableIps": "가용 IP",
+        "state": "상태"
+      },
+      "detail": {
+        "title": "서브넷 세부 정보",
+        "ownerId": "소유자 ID",
+        "azId": "AZ ID",
+        "defaultForAz": "AZ 기본 서브넷",
+        "mapPublicIp": "퍼블릭 IPv4 자동 할당",
+        "assignIpv6": "IPv6 자동 할당",
+        "ipv6Cidr": "IPv6 CIDR",
+        "enableDns64": "DNS64"
+      },
+      "vpcCidr": "VPC CIDR",
+      "cidrOutOfRange": "CIDR은 선택한 VPC({{cidr}}) 범위 안에 있어야 합니다."
+    },
+    "rt": {
+      "heading": "라우팅 테이블",
+      "none": "라우팅 테이블 없음",
+      "create": "라우팅 테이블 생성",
+      "createTitle": "라우팅 테이블 생성",
+      "created": "라우팅 테이블이 생성되었습니다",
+      "deleted": "라우팅 테이블이 삭제되었습니다",
+      "deleteTitle": "라우팅 테이블 삭제",
+      "deleteConfirm": "라우팅 테이블 \"{{id}}\"을(를) 삭제하시겠습니까?",
+      "pickVpc": "VPC 선택…",
+      "addRoute": "경로 추가",
+      "routeAdded": "경로가 추가되었습니다",
+      "routeRemoved": "경로가 제거되었습니다",
+      "col": {
+        "name": "이름",
+        "id": "라우팅 테이블 ID",
+        "vpc": "VPC ID",
+        "main": "메인",
+        "routes": "경로",
+        "associations": "연결"
+      },
+      "route": {
+        "destination": "대상",
+        "target": "타깃",
+        "state": "상태",
+        "none": "경로 없음"
+      },
+      "detail": {
+        "title": "라우팅 테이블 세부 정보",
+        "ownerId": "소유자 ID",
+        "associations": "연결",
+        "associationSubnet": "서브넷",
+        "associationMain": "메인",
+        "associationState": "상태",
+        "noAssociations": "연결 없음",
+        "propagatingVgws": "전파 VGW"
+      },
+      "routes": "경로"
+    },
+    "igw": {
+      "heading": "인터넷 게이트웨이",
+      "none": "인터넷 게이트웨이 없음",
+      "create": "인터넷 게이트웨이 생성",
+      "created": "인터넷 게이트웨이가 생성되었습니다",
+      "deleted": "인터넷 게이트웨이가 삭제되었습니다",
+      "deleteTitle": "인터넷 게이트웨이 삭제",
+      "deleteConfirm": "인터넷 게이트웨이 \"{{id}}\"을(를) 삭제하시겠습니까?",
+      "attach": "VPC에 연결",
+      "attachTitle": "인터넷 게이트웨이 연결",
+      "attached": "인터넷 게이트웨이가 연결되었습니다",
+      "detach": "VPC에서 분리",
+      "detached": "인터넷 게이트웨이가 분리되었습니다",
+      "pickVpc": "VPC 선택…",
+      "col": {
+        "name": "이름",
+        "id": "게이트웨이 ID",
+        "attachedVpc": "연결된 VPC",
+        "state": "상태"
+      },
+      "detail": {
+        "title": "인터넷 게이트웨이 세부 정보",
+        "ownerId": "소유자 ID"
+      }
+    },
+    "nat": {
+      "heading": "NAT 게이트웨이",
+      "none": "NAT 게이트웨이 없음",
+      "create": "NAT 게이트웨이 생성",
+      "createTitle": "NAT 게이트웨이 생성",
+      "created": "NAT 게이트웨이가 생성되었습니다",
+      "deleted": "NAT 게이트웨이가 삭제되었습니다",
+      "deleteTitle": "NAT 게이트웨이 삭제",
+      "deleteConfirm": "NAT 게이트웨이 \"{{id}}\"을(를) 삭제하시겠습니까?",
+      "pickSubnet": "서브넷 선택…",
+      "allocationId": "탄력적 IP 할당 ID",
+      "allocationHint": "퍼블릭 NAT 게이트웨이에는 할당된 탄력적 IP(eipalloc-…)가 필요합니다.",
+      "col": {
+        "name": "이름",
+        "id": "NAT 게이트웨이 ID",
+        "subnet": "서브넷 ID",
+        "vpc": "VPC ID",
+        "type": "유형",
+        "publicIp": "퍼블릭 IP",
+        "state": "상태"
+      },
+      "detail": {
+        "title": "NAT 게이트웨이 세부 정보",
+        "created": "생성됨",
+        "deleted": "삭제됨",
+        "failureMessage": "실패 메시지",
+        "addresses": "주소",
+        "privateIp": "프라이빗 IP",
+        "allocationId": "할당 ID",
+        "networkInterface": "네트워크 인터페이스"
+      },
+      "pickAllocation": "탄력적 IP 선택…",
+      "noAllocations": "연결되지 않은 탄력적 IP가 없습니다 — 탄력적 IP 페이지에서 먼저 할당하세요.",
+      "connectivity": "연결 유형",
+      "public": "퍼블릭",
+      "private": "프라이빗",
+      "privateHint": "프라이빗 NAT 게이트웨이는 탄력적 IP가 없습니다 — 다른 VPC/온프렘으로 라우팅."
+    },
+    "elasticIps": "탄력적 IP",
+    "details": "세부 정보",
+    "eip": {
+      "heading": "탄력적 IP",
+      "none": "탄력적 IP 없음",
+      "allocate": "탄력적 IP 할당",
+      "allocated": "탄력적 IP가 할당되었습니다",
+      "release": "해제",
+      "released": "탄력적 IP가 해제되었습니다",
+      "releaseTitle": "탄력적 IP 해제",
+      "releaseConfirm": "탄력적 IP \"{{id}}\"을(를) 해제하시겠습니까?",
+      "detail": {
+        "title": "탄력적 IP 세부 정보",
+        "networkBorderGroup": "네트워크 경계 그룹",
+        "publicIpv4Pool": "퍼블릭 IPv4 풀",
+        "instanceId": "인스턴스 ID",
+        "networkInterface": "네트워크 인터페이스",
+        "privateIp": "프라이빗 IP"
+      },
+      "unassociated": "연결 안 됨",
+      "col": {
+        "name": "이름",
+        "publicIp": "퍼블릭 IP",
+        "allocationId": "할당 ID",
+        "association": "연결",
+        "domain": "도메인"
+      }
+    }
   },
   "dbcache": {
     "section": "DB / Cache",
@@ -58,12 +247,210 @@
     "dbClusters": "DB 클러스터",
     "dbInstances": "DB 인스턴스",
     "cacheClusters": "캐시 클러스터",
-    "cacheNodes": "캐시 노드"
+    "cacheNodes": "캐시 노드",
+    "cluster": {
+      "heading": "DB 클러스터",
+      "subtitle": "RDS",
+      "none": "DB 클러스터 없음",
+      "create": "DB 클러스터 생성",
+      "createTitle": "DB 클러스터 생성",
+      "created": "DB 클러스터 \"{{id}}\" 생성됨",
+      "deleted": "DB 클러스터 \"{{id}}\" 삭제됨",
+      "deleteTitle": "DB 클러스터 삭제",
+      "deleteConfirm": "DB 클러스터 \"{{id}}\"을(를) 삭제할까요? 최종 스냅샷은 생성하지 않습니다.",
+      "engine": "엔진",
+      "engineVersion": "엔진 버전 (선택)",
+      "masterUsername": "마스터 사용자명",
+      "masterPassword": "마스터 비밀번호",
+      "members": "멤버",
+      "writer": "writer",
+      "reader": "reader",
+      "noMembers": "멤버 없음",
+      "col": {
+        "id": "식별자",
+        "engine": "엔진",
+        "version": "버전",
+        "status": "상태",
+        "endpoint": "엔드포인트",
+        "multiAZ": "Multi-AZ"
+      },
+      "detail": {
+        "readerEndpoint": "리더 엔드포인트",
+        "port": "포트",
+        "availabilityZones": "가용 영역",
+        "storageEncrypted": "스토리지 암호화",
+        "parameterGroup": "파라미터 그룹",
+        "backupRetention": "백업 보존 (일)",
+        "backupWindow": "백업 윈도우",
+        "maintenanceWindow": "유지 관리 윈도우",
+        "created": "생성 시각",
+        "arn": "ARN"
+      }
+    },
+    "instance": {
+      "heading": "DB 인스턴스",
+      "subtitle": "RDS",
+      "none": "DB 인스턴스 없음",
+      "create": "DB 인스턴스 생성",
+      "createTitle": "DB 인스턴스 생성",
+      "created": "DB 인스턴스 \"{{id}}\" 생성됨",
+      "deleted": "DB 인스턴스 \"{{id}}\" 삭제됨",
+      "deleteTitle": "DB 인스턴스 삭제",
+      "deleteConfirm": "DB 인스턴스 \"{{id}}\"을(를) 삭제할까요? 최종 스냅샷은 생성하지 않습니다.",
+      "engine": "엔진",
+      "class": "인스턴스 클래스",
+      "storage": "할당 스토리지 (GiB)",
+      "masterUsername": "마스터 사용자명",
+      "masterPassword": "마스터 비밀번호",
+      "col": {
+        "id": "식별자",
+        "engine": "엔진",
+        "class": "클래스",
+        "status": "상태",
+        "endpoint": "엔드포인트",
+        "storage": "스토리지",
+        "multiAZ": "Multi-AZ",
+        "az": "AZ"
+      },
+      "detail": {
+        "version": "엔진 버전",
+        "port": "포트",
+        "storageType": "스토리지 타입",
+        "storageEncrypted": "스토리지 암호화",
+        "publiclyAccessible": "퍼블릭 액세스",
+        "parameterGroup": "파라미터 그룹",
+        "backupRetention": "백업 보존 (일)",
+        "backupWindow": "백업 윈도우",
+        "maintenanceWindow": "유지 관리 윈도우",
+        "created": "생성 시각",
+        "arn": "ARN"
+      }
+    },
+    "cacheCluster": {
+      "heading": "캐시 클러스터",
+      "subtitle": "ElastiCache",
+      "none": "캐시 클러스터 없음",
+      "create": "캐시 클러스터 생성",
+      "createTitle": "캐시 클러스터 생성",
+      "created": "캐시 클러스터 \"{{id}}\" 생성됨",
+      "deleted": "캐시 클러스터 \"{{id}}\" 삭제됨",
+      "deleteTitle": "캐시 클러스터 삭제",
+      "deleteConfirm": "캐시 클러스터 \"{{id}}\"을(를) 삭제할까요?",
+      "engine": "엔진",
+      "nodeType": "노드 타입",
+      "numNodes": "노드 수",
+      "col": {
+        "id": "클러스터 ID",
+        "engine": "엔진",
+        "version": "버전",
+        "status": "상태",
+        "nodeType": "노드 타입",
+        "nodes": "노드",
+        "endpoint": "엔드포인트"
+      },
+      "detail": {
+        "port": "포트",
+        "parameterGroup": "파라미터 그룹",
+        "subnetGroup": "서브넷 그룹",
+        "securityGroups": "보안 그룹",
+        "maintenanceWindow": "유지 관리 윈도우",
+        "snapshotRetention": "스냅샷 보존 (일)",
+        "snapshotWindow": "스냅샷 윈도우",
+        "az": "가용 영역",
+        "created": "생성 시각",
+        "arn": "ARN"
+      }
+    },
+    "cacheNode": {
+      "heading": "캐시 노드",
+      "subtitle": "ElastiCache",
+      "none": "캐시 노드 없음",
+      "col": {
+        "cluster": "클러스터",
+        "id": "노드 ID",
+        "status": "상태",
+        "address": "주소",
+        "port": "포트",
+        "az": "AZ"
+      }
+    }
   },
   "function": {
     "section": "Function",
     "functions": "함수",
-    "layers": "레이어"
+    "layers": "레이어",
+    "fn": {
+      "heading": "함수",
+      "subtitle": "Lambda",
+      "none": "함수가 없습니다",
+      "notFound": "함수 \"{{name}}\"을(를) 찾을 수 없습니다",
+      "created": "함수 \"{{name}}\"이(가) 생성되었습니다",
+      "deleted": "함수 \"{{name}}\"이(가) 삭제되었습니다",
+      "create": "함수 생성",
+      "createTitle": "함수 생성",
+      "deleteTitle": "함수 삭제",
+      "deleteConfirm": "함수 \"{{name}}\"을(를) 삭제할까요?",
+      "create_": {
+        "name": "함수 이름",
+        "runtime": "런타임",
+        "handler": "핸들러",
+        "role": "실행 역할",
+        "rolePlaceholder": "역할 선택…",
+        "roleManual": "역할 ARN 직접 입력",
+        "rolePick": "기존 역할에서 선택",
+        "codeSource": "코드 소스",
+        "inline": "인라인 코드",
+        "upload": ".zip 업로드",
+        "code": "코드",
+        "zip": "배포 패키지 (.zip)",
+        "noFile": "업로드할 .zip 파일을 선택하세요"
+      },
+      "col": {
+        "name": "이름",
+        "runtime": "런타임",
+        "memory": "메모리",
+        "timeout": "타임아웃",
+        "codeSize": "코드 크기",
+        "lastModified": "마지막 수정",
+        "handler": "핸들러",
+        "role": "역할",
+        "arch": "아키텍처",
+        "packageType": "패키지 유형",
+        "description": "설명",
+        "state": "상태",
+        "lastUpdate": "마지막 업데이트",
+        "codeLocation": "코드 위치"
+      },
+      "config": {
+        "title": "구성",
+        "description": "함수의 런타임 구성을 편집합니다.",
+        "memory": "메모리 (MB)",
+        "timeout": "타임아웃 (초)",
+        "handler": "핸들러",
+        "fnDescription": "설명",
+        "saved": "구성이 저장되었습니다",
+        "save": "구성 저장"
+      },
+      "env": {
+        "title": "환경 변수",
+        "description": "런타임에 함수로 전달되는 키/값 쌍입니다.",
+        "saved": "환경 변수가 저장되었습니다"
+      }
+    },
+    "layer": {
+      "heading": "레이어",
+      "subtitle": "Lambda",
+      "none": "레이어가 없습니다",
+      "deleted": "레이어 버전이 삭제되었습니다",
+      "deleteTitle": "레이어 버전 삭제",
+      "deleteConfirm": "레이어 \"{{name}}\"의 버전 {{version}}을(를) 삭제할까요?",
+      "col": {
+        "name": "이름",
+        "latestVersion": "최신 버전",
+        "runtimes": "호환 런타임",
+        "created": "생성일"
+      }
+    }
   },
   "iam": {
     "section": "IAM",
@@ -305,7 +692,8 @@
       "encryption": "암호화",
       "website": "정적 웹사이트",
       "cors": "CORS",
-      "policy": "버킷 정책"
+      "policy": "버킷 정책",
+      "lifecycle": "수명 주기"
     },
     "versioning": {
       "label": "버전 관리",
@@ -340,6 +728,11 @@
     "policy": {
       "label": "버킷 정책",
       "hint": "버킷 정책 문서(JSON). 비우고 적용하면 정책이 삭제됩니다.",
+      "fillExample": "예시 채우기"
+    },
+    "lifecycle": {
+      "label": "수명 주기 규칙",
+      "hint": "수명 주기 Rules 배열(JSON). 비우고 적용하면 모든 규칙이 삭제됩니다.",
       "fillExample": "예시 채우기"
     }
   },
@@ -610,13 +1003,32 @@
       "recurrence": "반복",
       "capacity": "최소 / 목표 / 최대",
       "start": "시작 시각"
-    }
+    },
+    "addPolicy": "스케일링 정책 추가",
+    "policyAdded": "스케일링 정책 추가됨",
+    "policyDeleted": "스케일링 정책 삭제됨",
+    "addScheduled": "예약 작업 추가",
+    "scheduledAdded": "예약 작업 추가됨",
+    "scheduledDeleted": "예약 작업 삭제됨",
+    "metric": {
+      "cpu": "평균 CPU 사용률",
+      "albRequests": "타깃당 ALB 요청 수"
+    },
+    "recurrenceHint": "Cron 표현식 (UTC), 예: 0 9 * * *"
   },
   "lt": {
     "heading": "시작 템플릿",
     "subtitle": "EC2",
     "none": "시작 템플릿이 없습니다",
     "defaultVersion": "기본 v{{n}}",
+    "create": "시작 템플릿 생성",
+    "createTitle": "시작 템플릿 생성",
+    "created": "시작 템플릿 \"{{name}}\" 생성됨",
+    "deleted": "시작 템플릿 삭제됨",
+    "deleteTitle": "시작 템플릿 삭제",
+    "deleteConfirm": "시작 템플릿 \"{{name}}\"를 삭제할까요?",
+    "name": "이름",
+    "noSecurityGroups": "보안 그룹 없음",
     "col": {
       "name": "이름",
       "id": "템플릿 ID",
@@ -665,6 +1077,25 @@
     "heading": "볼륨",
     "subtitle": "EBS",
     "none": "볼륨이 없습니다",
+    "create": "볼륨 생성",
+    "createTitle": "볼륨 생성",
+    "created": "볼륨 생성됨",
+    "deleted": "볼륨 삭제됨",
+    "deleteTitle": "볼륨 삭제",
+    "deleteConfirm": "볼륨 \"{{id}}\"를 삭제할까요?",
+    "detach": "분리",
+    "detached": "볼륨 분리 요청됨",
+    "attach": "연결",
+    "attachTitle": "볼륨 연결",
+    "attached": "볼륨 연결 요청됨",
+    "az": "가용 영역",
+    "size": "크기 (GiB)",
+    "type": "볼륨 유형",
+    "iops": "IOPS",
+    "encrypted": "암호화",
+    "instance": "인스턴스",
+    "device": "디바이스 이름",
+    "pickInstance": "인스턴스 선택…",
     "col": {
       "id": "볼륨 ID",
       "size": "크기",

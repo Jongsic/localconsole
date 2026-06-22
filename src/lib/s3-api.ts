@@ -3,6 +3,7 @@ import {
   DeleteBucketCommand,
   DeleteBucketCorsCommand,
   DeleteBucketEncryptionCommand,
+  DeleteBucketLifecycleCommand,
   DeleteBucketPolicyCommand,
   DeleteBucketTaggingCommand,
   DeleteBucketWebsiteCommand,
@@ -10,6 +11,7 @@ import {
   DeleteObjectsCommand,
   GetBucketCorsCommand,
   GetBucketEncryptionCommand,
+  GetBucketLifecycleConfigurationCommand,
   GetBucketPolicyCommand,
   GetBucketTaggingCommand,
   GetBucketVersioningCommand,
@@ -21,6 +23,7 @@ import {
   ListObjectsV2Command,
   PutBucketCorsCommand,
   PutBucketEncryptionCommand,
+  PutBucketLifecycleConfigurationCommand,
   PutBucketPolicyCommand,
   PutBucketTaggingCommand,
   PutBucketVersioningCommand,
@@ -217,7 +220,7 @@ export const api = {
     const s3 = getClient();
     const websiteHost = useSettings.getState().settings.websiteHost;
 
-    const [versioning, tagging, encryption, cors, policy, website] = await Promise.all([
+    const [versioning, tagging, encryption, cors, policy, lifecycle, website] = await Promise.all([
       safe<BucketProperties["versioning"]>(
         async () => {
           const out = await s3.send(new GetBucketVersioningCommand({ Bucket: bucket }));
@@ -264,6 +267,15 @@ export const api = {
         { document: null },
       ),
 
+      safe<BucketProperties["lifecycle"]>(
+        async () => {
+          const out = await s3.send(new GetBucketLifecycleConfigurationCommand({ Bucket: bucket }));
+          const rules = out.Rules ?? [];
+          return { json: rules.length > 0 ? JSON.stringify(rules, null, 2) : null };
+        },
+        { json: null },
+      ),
+
       safe<BucketProperties["website"]>(
         async () => {
           const out = await s3.send(new GetBucketWebsiteCommand({ Bucket: bucket }));
@@ -285,6 +297,7 @@ export const api = {
       encryption,
       cors,
       policy,
+      lifecycle,
       website,
     };
   },
@@ -354,6 +367,22 @@ export const api = {
         } else {
           JSON.parse(doc);
           await s3.send(new PutBucketPolicyCommand({ Bucket: bucket, Policy: doc }));
+        }
+        break;
+      }
+      case "lifecycle": {
+        const json = input.value.json?.trim();
+        if (!json) {
+          await s3.send(new DeleteBucketLifecycleCommand({ Bucket: bucket }));
+        } else {
+          const parsed = JSON.parse(json);
+          const rules = Array.isArray(parsed) ? parsed : parsed.Rules;
+          await s3.send(
+            new PutBucketLifecycleConfigurationCommand({
+              Bucket: bucket,
+              LifecycleConfiguration: { Rules: rules },
+            }),
+          );
         }
         break;
       }

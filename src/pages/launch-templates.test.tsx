@@ -6,6 +6,12 @@ vi.mock("@/lib/ec2-api", () => ({
   api: {
     listLaunchTemplates: vi.fn(),
     getLaunchTemplateVersion: vi.fn(),
+    createLaunchTemplate: vi.fn().mockResolvedValue(undefined),
+    deleteLaunchTemplate: vi.fn().mockResolvedValue(undefined),
+    listKeyPairs: vi.fn().mockResolvedValue([{ keyName: "demo" }]),
+    listSecurityGroups: vi
+      .fn()
+      .mockResolvedValue([{ groupId: "sg-1", groupName: "web", inbound: [], outbound: [] }]),
   },
 }));
 
@@ -71,5 +77,38 @@ describe("LaunchTemplatesPage", () => {
     await waitFor(() => expect(api.getLaunchTemplateVersion).toHaveBeenCalledWith("lt-1"));
     expect(await screen.findByText("ami-123")).toBeInTheDocument();
     expect(screen.getByText("t3.small")).toBeInTheDocument();
+  });
+
+  it("create modal sends name/ami/instance type/key/SG to createLaunchTemplate", async () => {
+    vi.mocked(api.listLaunchTemplates).mockResolvedValue([]);
+    const { user } = renderWithProviders(<LaunchTemplatesPage />);
+    await screen.findByText("No launch templates");
+
+    await user.click(screen.getByRole("button", { name: /Create launch template/ }));
+    await user.type(screen.getByLabelText("Name"), "my-lt");
+    await user.selectOptions(await screen.findByLabelText("Key pair"), "demo");
+    await user.click(await screen.findByRole("checkbox", { name: /web/ }));
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() =>
+      expect(api.createLaunchTemplate).toHaveBeenCalledWith({
+        name: "my-lt",
+        imageId: "ami-0abcdef1234567890",
+        instanceType: "t3.micro",
+        keyName: "demo",
+        securityGroupIds: ["sg-1"],
+      }),
+    );
+  });
+
+  it("delete action calls deleteLaunchTemplate with the id", async () => {
+    vi.mocked(api.listLaunchTemplates).mockResolvedValue([sample]);
+    const { user } = renderWithProviders(<LaunchTemplatesPage />);
+    await screen.findByText("web");
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getAllByRole("button", { name: "Delete" }).at(-1) as HTMLElement);
+
+    await waitFor(() => expect(api.deleteLaunchTemplate).toHaveBeenCalledWith("lt-1"));
   });
 });

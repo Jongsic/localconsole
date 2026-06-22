@@ -9,6 +9,10 @@ vi.mock("@/lib/autoscaling-api", () => ({
     createAutoScalingGroup: vi.fn().mockResolvedValue(undefined),
     getAutoScalingGroupDetail: vi.fn(),
     updateCapacity: vi.fn().mockResolvedValue(undefined),
+    putScalingPolicy: vi.fn().mockResolvedValue(undefined),
+    deletePolicy: vi.fn().mockResolvedValue(undefined),
+    putScheduledAction: vi.fn().mockResolvedValue(undefined),
+    deleteScheduledAction: vi.fn().mockResolvedValue(undefined),
   },
 }));
 vi.mock("@/lib/ec2-api", () => ({
@@ -108,8 +112,10 @@ describe("AsgPage", () => {
 
     await user.click(await screen.findByText("web-asg"));
     // Capacity editor loads from the detail; bump desired then Apply.
-    const desired = await screen.findByLabelText("Desired");
-    await user.tripleClick(desired);
+    // The capacity editor's Desired field is the first one (the scheduled-action
+    // form below adds another Min/Desired/Max set).
+    const [desired] = await screen.findAllByLabelText("Desired");
+    await user.tripleClick(desired as HTMLElement);
     await user.keyboard("3");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
@@ -118,6 +124,55 @@ describe("AsgPage", () => {
         minSize: 1,
         maxSize: 4,
         desiredCapacity: 3,
+      }),
+    );
+  });
+
+  it("add-policy form sends name/metric/target to putScalingPolicy", async () => {
+    vi.mocked(api.listAutoScalingGroups).mockResolvedValue([asg]);
+    vi.mocked(api.getAutoScalingGroupDetail).mockResolvedValue(detail);
+    const { user } = renderWithProviders(<AsgPage />);
+
+    await user.click(await screen.findByText("web-asg"));
+    // The policy form's Name field is the first "Name" label in the detail panel.
+    const [policyName] = await screen.findAllByLabelText("Name");
+    await user.type(policyName as HTMLElement, "cpu-policy");
+    await user.selectOptions(screen.getByLabelText("Metric"), "ALBRequestCountPerTarget");
+    const target = screen.getByLabelText("Target value");
+    await user.tripleClick(target);
+    await user.keyboard("60");
+    await user.click(screen.getByRole("button", { name: "Add scaling policy" }));
+
+    await waitFor(() =>
+      expect(api.putScalingPolicy).toHaveBeenCalledWith({
+        asgName: "web-asg",
+        policyName: "cpu-policy",
+        metricType: "ALBRequestCountPerTarget",
+        targetValue: 60,
+      }),
+    );
+  });
+
+  it("add-scheduled form sends name/recurrence/capacity to putScheduledAction", async () => {
+    vi.mocked(api.listAutoScalingGroups).mockResolvedValue([asg]);
+    vi.mocked(api.getAutoScalingGroupDetail).mockResolvedValue(detail);
+    const { user } = renderWithProviders(<AsgPage />);
+
+    await user.click(await screen.findByText("web-asg"));
+    await user.type(await screen.findByLabelText("Recurrence"), "0 9 * * *");
+    // The scheduled form's Name field is the second "Name" label in the detail panel.
+    const scheduledName = screen.getAllByLabelText("Name")[1];
+    await user.type(scheduledName as HTMLElement, "scale-up");
+    await user.click(screen.getByRole("button", { name: "Add scheduled action" }));
+
+    await waitFor(() =>
+      expect(api.putScheduledAction).toHaveBeenCalledWith({
+        asgName: "web-asg",
+        name: "scale-up",
+        recurrence: "0 9 * * *",
+        minSize: 1,
+        maxSize: 2,
+        desiredCapacity: 1,
       }),
     );
   });

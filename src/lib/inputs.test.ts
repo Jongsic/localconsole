@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePortRange, splitCidrs } from "./inputs";
+import { cidrContains, parsePortRange, splitCidrs } from "./inputs";
 
 describe("parsePortRange", () => {
   it("treats empty / whitespace as all ports (null)", () => {
@@ -40,5 +40,38 @@ describe("splitCidrs", () => {
   it("returns an empty list for blank input", () => {
     expect(splitCidrs("")).toEqual([]);
     expect(splitCidrs(" , , ")).toEqual([]);
+  });
+});
+
+describe("cidrContains", () => {
+  it("returns true when the subnet is within the VPC range", () => {
+    expect(cidrContains("10.0.0.0/16", "10.0.1.0/24")).toBe(true);
+    expect(cidrContains("10.0.0.0/16", "10.0.255.0/24")).toBe(true);
+    expect(cidrContains("172.16.0.0/12", "172.31.0.0/16")).toBe(true);
+  });
+
+  it("returns false when the subnet network falls outside the VPC range", () => {
+    expect(cidrContains("10.0.0.0/16", "10.1.0.0/24")).toBe(false);
+    expect(cidrContains("192.168.0.0/16", "10.0.0.0/24")).toBe(false);
+  });
+
+  it("returns false when the subnet prefix is shorter than the VPC prefix (subnet larger than vpc)", () => {
+    expect(cidrContains("10.0.0.0/16", "10.0.0.0/8")).toBe(false);
+    expect(cidrContains("10.0.0.0/24", "10.0.0.0/16")).toBe(false);
+  });
+
+  it("treats an equal range as contained", () => {
+    expect(cidrContains("10.0.0.0/16", "10.0.0.0/16")).toBe(true);
+  });
+
+  it("ignores host bits in the subnet input (network base is what matters)", () => {
+    expect(cidrContains("10.0.0.0/16", "10.0.5.7/24")).toBe(true);
+  });
+
+  it("returns false on malformed input", () => {
+    expect(cidrContains("not-a-cidr", "10.0.1.0/24")).toBe(false);
+    expect(cidrContains("10.0.0.0/16", "10.0.1.0")).toBe(false);
+    expect(cidrContains("10.0.0.0/16", "10.0.1.0/40")).toBe(false);
+    expect(cidrContains("10.0.0.0/16", "10.0.300.0/24")).toBe(false);
   });
 });

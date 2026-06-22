@@ -41,3 +41,34 @@ export function splitCidrs(input: string): string[] {
     .map((c) => c.trim())
     .filter(Boolean);
 }
+
+/** Parse an IPv4 "a.b.c.d/n" CIDR into a 32-bit network base + prefix length, or null if malformed. */
+function parseIpv4Cidr(cidr: string): { base: number; prefix: number } | null {
+  const m = cidr.trim().match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/);
+  if (!m) return null;
+  const [o0, o1, o2, o3] = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4])];
+  const prefix = Number(m[5]);
+  if ([o0, o1, o2, o3].some((o) => o > 255) || prefix > 32) return null;
+  // >>> 0 keeps the result an unsigned 32-bit integer.
+  const addr = ((o0 << 24) | (o1 << 16) | (o2 << 8) | o3) >>> 0;
+  // Mask the address down to its network base so host bits don't affect comparison.
+  const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+  return { base: (addr & mask) >>> 0, prefix };
+}
+
+/**
+ * True when an IPv4 subnet CIDR falls entirely within a VPC CIDR.
+ *  - both must be valid IPv4 CIDRs
+ *  - the subnet prefix length must be >= the vpc prefix length (subnet no larger than the vpc)
+ *  - the subnet's network base, masked to the vpc prefix, must equal the vpc's network base
+ *
+ * Equal ranges (same base + same prefix) count as contained. Returns false on any malformed input.
+ */
+export function cidrContains(vpcCidr: string, subnetCidr: string): boolean {
+  const vpc = parseIpv4Cidr(vpcCidr);
+  const subnet = parseIpv4Cidr(subnetCidr);
+  if (!vpc || !subnet) return false;
+  if (subnet.prefix < vpc.prefix) return false;
+  const vpcMask = vpc.prefix === 0 ? 0 : (0xffffffff << (32 - vpc.prefix)) >>> 0;
+  return (subnet.base & vpcMask) >>> 0 === vpc.base;
+}
