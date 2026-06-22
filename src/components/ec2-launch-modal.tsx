@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/ec2-api";
+import { api as iamApi } from "@/lib/iam-api";
 import type { Ec2LaunchInput } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "./toast";
@@ -30,6 +31,7 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
   const [keyName, setKeyName] = useState("");
   const [securityGroupIds, setSecurityGroupIds] = useState<string[]>([]);
   const [subnetId, setSubnetId] = useState("");
+  const [iamInstanceProfileName, setIamInstanceProfileName] = useState("");
 
   // Live pickers — loaded only while the dialog is open.
   const keyPairs = useQuery({ queryKey: ["key-pairs"], queryFn: api.listKeyPairs, enabled: open });
@@ -39,6 +41,11 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
     enabled: open,
   });
   const subnets = useQuery({ queryKey: ["subnets"], queryFn: api.listSubnets, enabled: open });
+  const instanceProfiles = useQuery({
+    queryKey: ["instance-profiles"],
+    queryFn: iamApi.listInstanceProfiles,
+    enabled: open,
+  });
 
   const toggleSg = (id: string) =>
     setSecurityGroupIds((prev) =>
@@ -55,6 +62,7 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
         keyName: keyName.trim() || undefined,
         securityGroupIds,
         subnetId: subnetId.trim() || undefined,
+        iamInstanceProfileName: iamInstanceProfileName.trim() || undefined,
       };
       return api.launchInstances(input);
     },
@@ -164,6 +172,20 @@ export function Ec2LaunchModal({ open, onClose }: { open: boolean; onClose: () =
                     {s.name ? ` (${s.name})` : ""}
                     {s.availabilityZone ? ` — ${s.availabilityZone}` : ""}
                     {s.cidrBlock ? ` ${s.cidrBlock}` : ""}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label={t("ec2.launch.iamInstanceProfile")}>
+              <Select
+                value={iamInstanceProfileName}
+                onChange={(e) => setIamInstanceProfileName(e.target.value)}
+              >
+                <option value="">{t("ec2.launch.none")}</option>
+                {(instanceProfiles.data ?? []).map((p) => (
+                  <option key={p.instanceProfileName} value={p.instanceProfileName}>
+                    {p.instanceProfileName}
                   </option>
                 ))}
               </Select>

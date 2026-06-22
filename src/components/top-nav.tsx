@@ -15,6 +15,7 @@ const TABS: { href: string; label: string; section: Section; comingSoon: boolean
   { href: "/vpc", label: "VPC", section: "vpc", comingSoon: true },
   { href: "/db", label: "DB/Cache", section: "db", comingSoon: true },
   { href: "/function", label: "Function", section: "function", comingSoon: true },
+  { href: "/iam", label: "IAM", section: "iam", comingSoon: false },
 ];
 
 export function TopNav() {

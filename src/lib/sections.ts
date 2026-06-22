@@ -4,15 +4,18 @@ import {
   Database,
   Globe,
   HardDrive,
+  IdCard,
   KeyRound,
   Layers,
   LayoutTemplate,
   Network,
   Route,
+  ScrollText,
   Server,
   ShieldCheck,
   Target,
   TrendingUp,
+  UserCog,
   Waypoints,
   Zap,
 } from "lucide-react";
@@ -81,6 +84,17 @@ export const DBCACHE_ITEMS: SubNavItem[] = [
     comingSoon: true,
     group: "dbcache.cache",
   },
+];
+
+export const IAM_ITEMS: SubNavItem[] = [
+  { path: "roles", labelKey: "iam.roles", icon: UserCog, comingSoon: false },
+  {
+    path: "instance-profiles",
+    labelKey: "iam.instanceProfiles",
+    icon: IdCard,
+    comingSoon: false,
+  },
+  { path: "policies", labelKey: "iam.policies", icon: ScrollText, comingSoon: false },
 ];
 
 export const FUNCTION_ITEMS: SubNavItem[] = [

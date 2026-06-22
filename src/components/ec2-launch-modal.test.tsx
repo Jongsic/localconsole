@@ -19,6 +19,16 @@ vi.mock("@/lib/ec2-api", () => ({
   },
 }));
 
+vi.mock("@/lib/iam-api", () => ({
+  api: {
+    listInstanceProfiles: vi
+      .fn()
+      .mockResolvedValue([
+        { instanceProfileName: "web-profile", arn: "arn:profile", path: "/", roleNames: [] },
+      ]),
+  },
+}));
+
 import { api } from "@/lib/ec2-api";
 import { Ec2LaunchModal } from "./ec2-launch-modal";
 
@@ -63,6 +73,7 @@ describe("Ec2LaunchModal", () => {
     await user.selectOptions(screen.getByLabelText("Key pair"), "demo");
     await user.click(screen.getByRole("checkbox"));
     await user.selectOptions(screen.getByLabelText("Subnet"), "subnet-abc");
+    await user.selectOptions(screen.getByLabelText("IAM instance profile"), "web-profile");
 
     await user.click(screen.getByRole("button", { name: "Launch" }));
 
@@ -72,6 +83,7 @@ describe("Ec2LaunchModal", () => {
         keyName: "demo",
         securityGroupIds: ["sg-123"],
         subnetId: "subnet-abc",
+        iamInstanceProfileName: "web-profile",
       }),
     );
   });

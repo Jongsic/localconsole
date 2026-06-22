@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS: ConnectionSettings = {
 export type BackendKind = "localstack" | "floci" | "minio" | "moto" | "aws" | "unknown" | "none";
 
 /** Top-level navigation sections, gated per backend (see config/backends.json) */
-export type Section = "s3" | "compute" | "vpc" | "db" | "function";
+export type Section = "s3" | "compute" | "vpc" | "db" | "function" | "iam";
 
 /* ── S3 domain types ── */
 
@@ -479,4 +479,91 @@ export type Ec2LaunchInput = {
   keyName?: string;
   securityGroupIds?: string[];
   subnetId?: string;
+  /** IAM instance profile name to attach (IamInstanceProfile.Name) */
+  iamInstanceProfileName?: string;
+};
+
+/* ── IAM domain types ── */
+
+/** Row in the IAM roles table */
+export type IamRoleSummary = {
+  roleName: string;
+  arn: string;
+  path: string;
+  createDate: string | null;
+  description: string | null;
+  /** Trust policy (assume-role) document, URL-decoded; null when absent */
+  assumeRolePolicyDocument: string | null;
+};
+
+/** Input for creating an IAM role (AssumeRolePolicyDocument is required) */
+export type CreateRoleInput = {
+  roleName: string;
+  path?: string;
+  /** Trust policy document (JSON string) */
+  assumeRolePolicyDocument: string;
+};
+
+/** Row in the IAM instance profiles table */
+export type IamInstanceProfileSummary = {
+  instanceProfileName: string;
+  arn: string;
+  path: string;
+  createDate: string | null;
+  roleNames: string[];
+};
+
+/** Input for creating an instance profile */
+export type CreateInstanceProfileInput = {
+  instanceProfileName: string;
+  path?: string;
+};
+
+/** A managed policy attached to a role (ListAttachedRolePolicies) */
+export type AttachedPolicy = {
+  policyName: string;
+  policyArn: string;
+};
+
+/** An inline policy document fetched for a role (GetRolePolicy) */
+export type InlinePolicyDocument = {
+  policyName: string;
+  /** Policy document (JSON string, URL-decoded if the backend returns it encoded) */
+  document: string;
+};
+
+/** Row in the managed policies table (ListPolicies) */
+export type IamPolicySummary = {
+  policyName: string;
+  arn: string;
+  path: string;
+  attachmentCount: number;
+  /** True when the ARN is under aws: (an AWS-managed policy) */
+  isAwsManaged: boolean;
+  createDate: string | null;
+};
+
+/** Scope filter for ListPolicies */
+export type PolicyScope = "Local" | "AWS" | "All";
+
+/** Input for creating a managed policy (CreatePolicy) */
+export type CreatePolicyInput = {
+  policyName: string;
+  path?: string;
+  /** Policy document (JSON string) */
+  document: string;
+};
+
+/** A managed policy's default-version document (GetPolicy + GetPolicyVersion) */
+export type IamPolicyDetail = {
+  policyName: string;
+  arn: string;
+  path: string;
+  defaultVersionId: string | null;
+  attachmentCount: number;
+  isAwsManaged: boolean;
+  createDate: string | null;
+  updateDate: string | null;
+  /** Default-version policy document (JSON string, URL-decoded), or null */
+  document: string | null;
 };

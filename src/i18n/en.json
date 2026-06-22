@@ -65,6 +65,115 @@
     "functions": "Functions",
     "layers": "Layers"
   },
+  "iam": {
+    "section": "IAM",
+    "roles": "Roles",
+    "instanceProfiles": "Instance profiles",
+    "policies": "Policies",
+    "role": {
+      "heading": "Roles",
+      "subtitle": "IAM",
+      "none": "No roles",
+      "create": "Create role",
+      "createTitle": "Create role",
+      "created": "Role \"{{name}}\" created",
+      "deleted": "Role \"{{name}}\" deleted",
+      "deleteTitle": "Delete role",
+      "deleteConfirm": "Delete role \"{{name}}\"?",
+      "trustPolicy": "Trust policy (assume-role document)",
+      "notFound": "Role {{name}} not found",
+      "col": {
+        "name": "Name",
+        "arn": "ARN",
+        "path": "Path",
+        "created": "Created",
+        "description": "Description"
+      },
+      "trust": {
+        "title": "Trust relationship",
+        "description": "Entities that can assume this role (assume-role policy document).",
+        "save": "Save trust policy",
+        "saved": "Trust policy updated"
+      },
+      "attached": {
+        "title": "Attached policies (managed)",
+        "none": "No managed policies attached",
+        "attach": "Attach policy",
+        "attachTitle": "Attach managed policy",
+        "pickPolicy": "Managed policy",
+        "pickPlaceholder": "Select a policy…",
+        "orArn": "…or paste a policy ARN",
+        "attached": "Policy attached",
+        "detached": "Policy detached",
+        "detach": "Detach"
+      },
+      "inline": {
+        "title": "Inline policies",
+        "none": "No inline policies",
+        "add": "Add inline policy",
+        "addTitle": "Add inline policy",
+        "name": "Policy name",
+        "document": "Policy document",
+        "save": "Save",
+        "saved": "Inline policy \"{{name}}\" saved",
+        "deleted": "Inline policy \"{{name}}\" deleted",
+        "deleteTitle": "Delete inline policy",
+        "deleteConfirm": "Delete inline policy \"{{name}}\"?"
+      }
+    },
+    "policy": {
+      "heading": "Policies",
+      "subtitle": "IAM",
+      "none": "No policies",
+      "noMatch": "No policies match your search",
+      "search": "Search name or ARN",
+      "create": "Create policy",
+      "createTitle": "Create policy",
+      "created": "Policy \"{{name}}\" created",
+      "deleted": "Policy \"{{name}}\" deleted",
+      "deleteTitle": "Delete policy",
+      "deleteConfirm": "Delete policy \"{{name}}\"?",
+      "document": "Policy document",
+      "notFound": "Policy not found",
+      "showAws": "AWS-managed",
+      "showAwsHint": "Toggle AWS-managed policies in the list",
+      "typeAws": "AWS managed",
+      "typeCustomer": "Customer managed",
+      "defaultVersion": "Default version",
+      "col": {
+        "name": "Name",
+        "type": "Type",
+        "arn": "ARN",
+        "path": "Path",
+        "attachments": "Attachments",
+        "created": "Created"
+      }
+    },
+    "profile": {
+      "heading": "Instance profiles",
+      "subtitle": "IAM",
+      "none": "No instance profiles",
+      "create": "Create instance profile",
+      "createTitle": "Create instance profile",
+      "created": "Instance profile \"{{name}}\" created",
+      "deleted": "Instance profile \"{{name}}\" deleted",
+      "deleteTitle": "Delete instance profile",
+      "deleteConfirm": "Delete instance profile \"{{name}}\"?",
+      "role": "Role (optional)",
+      "noRole": "None",
+      "noRoles": "No roles attached",
+      "attachRole": "Attach role…",
+      "detachRole": "Detach role",
+      "roleAttached": "Role attached",
+      "roleDetached": "Role detached",
+      "col": {
+        "name": "Name",
+        "arn": "ARN",
+        "path": "Path",
+        "roles": "Roles"
+      }
+    }
+  },
   "setup": {
     "title": "Connect to a backend",
     "intro": "OpenConsole talks to your backend directly from the browser. Configure the connection to get started.",
@@ -260,6 +369,7 @@
       "noSecurityGroups": "No security groups found.",
       "subnet": "Subnet",
       "defaultSubnet": "Default subnet",
+      "iamInstanceProfile": "IAM instance profile",
       "submit": "Launch",
       "created": "Instance launch requested"
     },

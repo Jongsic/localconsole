@@ -4,7 +4,7 @@ import { backendEntry, hasSection, sectionsFor } from "./backends";
 describe("sectionsFor", () => {
   it("opens all sections for full backends (aws/floci/localstack/moto)", () => {
     for (const b of ["aws", "floci", "localstack", "moto"] as const) {
-      expect(sectionsFor(b)).toEqual(["s3", "compute", "vpc", "db", "function"]);
+      expect(sectionsFor(b)).toEqual(["s3", "compute", "vpc", "db", "function", "iam"]);
     }
   });
 
@@ -30,6 +30,15 @@ describe("hasSection", () => {
     expect(hasSection("aws", "compute")).toBe(true);
     expect(hasSection("minio", "compute")).toBe(false);
     expect(hasSection("minio", "s3")).toBe(true);
+  });
+
+  it("opens iam on full backends but not minio/unknown/none", () => {
+    for (const b of ["aws", "floci", "localstack", "moto"] as const) {
+      expect(hasSection(b, "iam")).toBe(true);
+    }
+    expect(hasSection("minio", "iam")).toBe(false);
+    expect(hasSection("unknown", "iam")).toBe(false);
+    expect(hasSection("none", "iam")).toBe(false);
   });
 
   it("is always false for 'none'", () => {

@@ -4,7 +4,7 @@ import type { BackendKind, Section } from "./types";
 
 /* ── Registry schema (validates config/backends.json at load) ── */
 
-const sectionSchema = z.enum(["s3", "compute", "vpc", "db", "function"]);
+const sectionSchema = z.enum(["s3", "compute", "vpc", "db", "function", "iam"]);
 
 const detectSchema = z.object({
   /** Health/status path probed without credentials */

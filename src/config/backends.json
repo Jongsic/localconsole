@@ -3,23 +3,23 @@
   "backends": {
     "aws": {
       "label": "AWS",
-      "sections": ["s3", "compute", "vpc", "db", "function"]
+      "sections": ["s3", "compute", "vpc", "db", "function", "iam"]
     },
     "floci": {
       "label": "Floci",
       "detect": { "healthPath": "/_floci/health", "ports": [4566], "jsonKey": "services" },
-      "sections": ["s3", "compute", "vpc", "db", "function"],
+      "sections": ["s3", "compute", "vpc", "db", "function", "iam"],
       "note": "Floci (github.com/floci-io/floci) is a LocalStack drop-in. It must be checked BEFORE localstack: it serves the LocalStack-compat /_localstack/health too, but only Floci serves its native /_floci/health (404 on LocalStack), which is the distinguishing signal."
     },
     "localstack": {
       "label": "LocalStack",
       "detect": { "healthPath": "/_localstack/health", "ports": [4566], "jsonKey": "services" },
-      "sections": ["s3", "compute", "vpc", "db", "function"]
+      "sections": ["s3", "compute", "vpc", "db", "function", "iam"]
     },
     "moto": {
       "label": "moto",
       "detect": { "healthPath": "/moto-api/", "ports": [5000] },
-      "sections": ["s3", "compute", "vpc", "db", "function"]
+      "sections": ["s3", "compute", "vpc", "db", "function", "iam"]
     },
     "minio": {
       "label": "MinIO",

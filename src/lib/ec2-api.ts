@@ -451,6 +451,9 @@ export const api = {
       ...(input.keyName ? { KeyName: input.keyName } : {}),
       ...(input.securityGroupIds?.length ? { SecurityGroupIds: input.securityGroupIds } : {}),
       ...(input.subnetId ? { SubnetId: input.subnetId } : {}),
+      ...(input.iamInstanceProfileName
+        ? { IamInstanceProfile: { Name: input.iamInstanceProfileName } }
+        : {}),
       ...(input.name
         ? {
             TagSpecifications: [

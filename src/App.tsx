@@ -1,14 +1,17 @@
-import { Boxes, Database, Network, Zap } from "lucide-react";
+import { Boxes, Database, Network, ShieldCheck, Zap } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ConnectionDialog } from "@/components/connection-dialog";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
 import { SectionLayout, SoonPage } from "@/components/section-layout";
 import { TopNav } from "@/components/top-nav";
-import { COMPUTE_ITEMS, DBCACHE_ITEMS, FUNCTION_ITEMS, VPC_ITEMS } from "@/lib/sections";
+import { COMPUTE_ITEMS, DBCACHE_ITEMS, FUNCTION_ITEMS, IAM_ITEMS, VPC_ITEMS } from "@/lib/sections";
 import { AlbDetailPage, AlbPage } from "@/pages/alb";
 import { AsgPage } from "@/pages/asg";
 import { Ec2Page } from "@/pages/ec2";
+import { InstanceProfilesPage } from "@/pages/iam-instance-profiles";
+import { IamPoliciesPage, IamPolicyDetailPage } from "@/pages/iam-policies";
+import { IamRoleDetailPage, IamRolesPage } from "@/pages/iam-roles";
 import { KeyPairsPage } from "@/pages/key-pairs";
 import { LaunchTemplatesPage } from "@/pages/launch-templates";
 import { S3Page } from "@/pages/s3";
@@ -112,6 +115,20 @@ export function App() {
                         element={<SoonPage labelKey={it.labelKey} />}
                       />
                     ))}
+                  </Route>
+
+                  <Route
+                    path="/iam"
+                    element={
+                      <SectionLayout titleKey="iam.section" icon={ShieldCheck} items={IAM_ITEMS} />
+                    }
+                  >
+                    <Route index element={<Navigate to="roles" replace />} />
+                    <Route path="roles" element={<IamRolesPage />} />
+                    <Route path="roles/:roleName" element={<IamRoleDetailPage />} />
+                    <Route path="instance-profiles" element={<InstanceProfilesPage />} />
+                    <Route path="policies" element={<IamPoliciesPage />} />
+                    <Route path="policies/:policyId" element={<IamPolicyDetailPage />} />
                   </Route>
 
                   {/* Back-compat redirects from the old flat tab paths */}
