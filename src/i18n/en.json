@@ -32,6 +32,11 @@
     "comingSoonBody": "The {{service}} section is coming soon.",
     "disabledForBackend": "Not available for the detected backend ({{backend}})."
   },
+  "region": {
+    "title": "Region",
+    "custom": "Custom region…",
+    "customPlaceholder": "e.g. us-gov-west-1"
+  },
   "compute": {
     "section": "Compute",
     "instances": "Instances",

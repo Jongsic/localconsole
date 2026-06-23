@@ -32,6 +32,11 @@
     "comingSoonBody": "{{service}} 메뉴는 곧 추가될 예정입니다.",
     "disabledForBackend": "감지된 백엔드({{backend}})에서는 사용할 수 없습니다."
   },
+  "region": {
+    "title": "리전",
+    "custom": "직접 입력…",
+    "customPlaceholder": "예: us-gov-west-1"
+  },
   "compute": {
     "section": "Compute",
     "instances": "인스턴스",

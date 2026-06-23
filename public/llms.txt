@@ -1,21 +1,43 @@
 # OpenConsole
 
-> A browser-only console for LocalStack, MinIO, or real AWS. There is no server: the browser talks to the endpoint directly using the AWS SDK, and connection settings are stored in the browser's localStorage. Because requests come from the visitor's browser, the app can be hosted on a public domain and still reach each visitor's own local backend.
+> A browser-only console for LocalStack, Floci, moto, MinIO, or real AWS. There is no server: the browser talks to the endpoint directly using the AWS SDK, and connection settings are stored in the browser's localStorage. Because requests come from the visitor's browser, the app can be hosted on a public domain and still reach each visitor's own local backend.
 
 ## Overview
 
 - Free and public domain software (The Unlicense) — anyone may use, modify, and redistribute it.
-- Stack: React 18 + Vite, TypeScript, Tailwind CSS, TanStack Query, Zustand, Zod, react-router, react-i18next, @aws-sdk/client-s3.
+- Stack: React 18 + Vite, TypeScript, Tailwind CSS, TanStack Query, Zustand, Zod, react-router, react-i18next, and the AWS SDK v3 clients (s3, ec2, elastic-load-balancing-v2, auto-scaling, iam, rds, elasticache, lambda).
 - UI languages: English and Korean (auto-detected from browser locale, switchable).
-- The app auto-detects the backend (LocalStack / MinIO / AWS) and gates non-S3 service tabs to LocalStack.
+- The app auto-detects the backend (LocalStack / Floci / moto / MinIO / AWS) and opens the top-level sections that backend supports. Within an open section, anything a backend doesn't implement is shown as a calm "not supported" state rather than an error; permission/CORS errors are surfaced, not hidden.
+- Endpoint, region, credentials, and force-path-style are configured in the in-app settings dialog; region can also be switched from a selector in the top navigation.
 
 ## Features
 
+### S3
 - Buckets: list, create, delete (with force-delete of contents).
 - Objects: prefix/folder browsing with a parent (`..`) row, upload (drag & drop), create folders and text files, edit text, download, delete.
 - Image objects: click to preview.
 - Object details: content type (MIME), size, last modified, ETag, user metadata, tags, and the direct object URL.
 - Bucket properties (useful for creating IaC drift): versioning, tags, encryption, static website hosting (index/error documents), CORS, bucket policy, and ARN.
+
+### Compute (EC2)
+- Instances: list, detail (details / security / networking / storage / tags), launch (key pair, security groups, subnet & instance-profile pickers), start / stop / reboot / terminate, edit (tags, instance type, security groups, termination & stop protection), IMDSv2 / user data view.
+- Security groups: list + detail page, create / delete, inbound/outbound rule add / remove.
+- Volumes (EBS), key pairs (create / import / delete), launch templates (create / delete).
+- Load balancers (ALB/NLB): attributes, tags, listeners (create / delete), per-listener rules.
+- Target groups: create / delete, register / deregister targets, health-check + stickiness + algorithm editing, tags.
+- Auto Scaling groups: create / delete, capacity edit, scaling policies & scheduled actions.
+
+### VPC
+- VPCs, subnets, route tables (+ routes), internet gateways (attach / detach), NAT gateways (public / private), and Elastic IPs — list / create / delete with a tags + attributes detail panel.
+
+### DB / Cache
+- RDS DB clusters & instances and ElastiCache cache clusters & nodes (Memcached / Redis / Valkey) — list / create / delete with a tags + properties detail panel.
+
+### Function (Lambda)
+- Functions (create from inline-zipped code, detail page with config / code / env) and layers.
+
+### IAM
+- Roles (detail with attached & inline policies, trust policy), instance profiles, and policies (managed + customer, searchable, with policy-document view). IAM is global, so it behaves the same regardless of the selected region.
 
 ## Setup notes
 
@@ -24,4 +46,4 @@
 
 ## Docs
 
-- [User guide](/readme.html): introduction, how to run (local, Docker, hosted), and required setup for AWS, LocalStack, MinIO, and other backends.
+- [User guide](/readme.html): introduction, how to run (local, Docker, hosted), and required setup for AWS, LocalStack, Floci, moto, MinIO, and other backends.

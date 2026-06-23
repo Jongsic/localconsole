@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSettings } from "@/store/settings";
 import { ConnectionDialog } from "./connection-dialog";
 import { LanguageSwitch } from "./language-switch";
+import { RegionSwitch } from "./region-switch";
 
 const TABS: { href: string; label: string; section: Section; comingSoon: boolean }[] = [
   { href: "/s3", label: "S3", section: "s3", comingSoon: false },
@@ -71,6 +72,7 @@ export function TopNav() {
 
       <div className="ml-auto flex items-center gap-3">
         <LanguageSwitch />
+        <RegionSwitch />
         <button
           type="button"
           title={t("common.settings")}
