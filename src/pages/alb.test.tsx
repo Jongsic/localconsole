@@ -214,7 +214,7 @@ describe("AlbDetailPage listeners & rules", () => {
           listenerArn: "arn:listener",
           conditionField: "path-pattern",
           values: "/api/*",
-          targetGroupArn: "arn:tg",
+          targets: [{ targetGroupArn: "arn:tg", weight: 1 }],
           priority: 10,
         }),
       ),

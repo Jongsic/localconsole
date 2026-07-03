@@ -5,11 +5,13 @@ import {
   DeletePolicyCommand,
   DeleteScheduledActionCommand,
   DescribeAutoScalingGroupsCommand,
+  DescribeInstanceRefreshesCommand,
   DescribePoliciesCommand,
   DescribeScheduledActionsCommand,
   type Instance,
   PutScalingPolicyCommand,
   PutScheduledUpdateGroupActionCommand,
+  StartInstanceRefreshCommand,
   UpdateAutoScalingGroupCommand,
 } from "@aws-sdk/client-auto-scaling";
 import { mockClient } from "aws-sdk-client-mock";
@@ -165,6 +167,47 @@ describe("getAutoScalingGroupDetail mapping", () => {
     });
   });
 
+  it("maps instance refreshes (best-effort) and stays empty when the API rejects", async () => {
+    asg.on(DescribeAutoScalingGroupsCommand).resolves({
+      AutoScalingGroups: [
+        { AutoScalingGroupName: "web-asg", MinSize: 1, MaxSize: 2, DesiredCapacity: 1 },
+      ] as unknown as AutoScalingGroup[],
+    });
+    asg.on(DescribePoliciesCommand).resolves({});
+    asg.on(DescribeScheduledActionsCommand).resolves({});
+    asg.on(DescribeInstanceRefreshesCommand).resolves({
+      InstanceRefreshes: [
+        {
+          InstanceRefreshId: "ir-1",
+          Status: "InProgress",
+          PercentageComplete: 40,
+          InstancesToUpdate: 3,
+          StartTime: new Date("2024-06-01T00:00:00Z"),
+        },
+      ],
+    });
+    const d = await api.getAutoScalingGroupDetail("web-asg");
+    expect(d.instanceRefreshes[0]).toMatchObject({
+      id: "ir-1",
+      status: "InProgress",
+      percentageComplete: 40,
+      instancesToUpdate: 3,
+      startTime: "2024-06-01T00:00:00.000Z",
+    });
+
+    asg.reset();
+    asg.on(DescribeAutoScalingGroupsCommand).resolves({
+      AutoScalingGroups: [
+        { AutoScalingGroupName: "web-asg", MinSize: 1, MaxSize: 2, DesiredCapacity: 1 },
+      ] as unknown as AutoScalingGroup[],
+    });
+    asg.on(DescribePoliciesCommand).resolves({});
+    asg.on(DescribeScheduledActionsCommand).resolves({});
+    asg.on(DescribeInstanceRefreshesCommand).rejects(new Error("not supported"));
+    const d2 = await api.getAutoScalingGroupDetail("web-asg");
+    expect(d2.instanceRefreshes).toEqual([]);
+  });
+
   it("throws when the group is not found", async () => {
     asg
       .on(DescribeAutoScalingGroupsCommand)
@@ -289,6 +332,29 @@ describe("write/command shapes", () => {
     const input = asg.commandCalls(PutScheduledUpdateGroupActionCommand)[0]?.args[0].input;
     expect(input).not.toHaveProperty("MinSize");
     expect(input).not.toHaveProperty("DesiredCapacity");
+  });
+
+  it("startInstanceRefresh sends preferences; omits InstanceWarmup when unset", async () => {
+    asg.on(StartInstanceRefreshCommand).resolves({});
+    await api.startInstanceRefresh({
+      asgName: "web-asg",
+      minHealthyPercentage: 90,
+      instanceWarmupSeconds: 120,
+    });
+    expect(asg.commandCalls(StartInstanceRefreshCommand)[0]?.args[0].input).toEqual({
+      AutoScalingGroupName: "web-asg",
+      Preferences: { MinHealthyPercentage: 90, InstanceWarmup: 120 },
+    });
+
+    asg.reset();
+    asg.on(StartInstanceRefreshCommand).resolves({});
+    await api.startInstanceRefresh({
+      asgName: "web-asg",
+      minHealthyPercentage: 100,
+      instanceWarmupSeconds: null,
+    });
+    const input = asg.commandCalls(StartInstanceRefreshCommand)[0]?.args[0].input;
+    expect(input?.Preferences).not.toHaveProperty("InstanceWarmup");
   });
 
   it("deletePolicy / deleteScheduledAction send the right names", async () => {

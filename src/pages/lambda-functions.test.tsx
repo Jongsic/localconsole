@@ -11,6 +11,10 @@ vi.mock("@/lib/lambda-api", () => ({
     updateFunctionConfiguration: vi.fn().mockResolvedValue(undefined),
     updateFunctionEnvironment: vi.fn().mockResolvedValue(undefined),
     deleteFunction: vi.fn().mockResolvedValue(undefined),
+    // Reject so the code section renders its "unavailable" state instead of
+    // mounting the Monaco editor (which the jsdom test environment can't host).
+    getFunctionCode: vi.fn().mockRejectedValue(new Error("no code in tests")),
+    updateFunctionCode: vi.fn().mockResolvedValue(undefined),
   },
 }));
 

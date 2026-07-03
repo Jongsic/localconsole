@@ -51,6 +51,7 @@ const detail: AsgDetail = {
   instances: [],
   policies: [],
   scheduledActions: [],
+  instanceRefreshes: [],
 };
 
 describe("AsgPage", () => {

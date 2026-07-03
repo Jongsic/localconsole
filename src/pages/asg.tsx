@@ -29,7 +29,7 @@ import {
 import { api } from "@/lib/autoscaling-api";
 import { api as ec2 } from "@/lib/ec2-api";
 import { api as elbv2 } from "@/lib/elbv2-api";
-import type { AsgPredefinedMetric, AsgSummary } from "@/lib/types";
+import type { AsgInstanceRefresh, AsgPredefinedMetric, AsgSummary } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 
 export function AsgPage() {
@@ -539,6 +539,107 @@ function AddScheduledForm({ asgName }: { asgName: string }) {
   );
 }
 
+/** Statuses that mean a refresh is still running → worth polling for. */
+const REFRESH_ACTIVE = new Set(["Pending", "InProgress", "Cancelling", "RollbackInProgress"]);
+
+function AddInstanceRefreshForm({ asgName }: { asgName: string }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
+  const [minHealthy, setMinHealthy] = useState(90);
+  const [warmup, setWarmup] = useState("");
+
+  const start = useMutation({
+    mutationFn: () =>
+      api.startInstanceRefresh({
+        asgName,
+        minHealthyPercentage: minHealthy,
+        instanceWarmupSeconds: warmup.trim() === "" ? null : Math.max(0, Number(warmup) || 0),
+      }),
+    onSuccess: () => {
+      toast.success(t("asg.refreshStarted"));
+      qc.invalidateQueries({ queryKey: ["asg-detail", asgName] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const inputCls = cn(CONTROL_CLASS, "py-1.5");
+
+  return (
+    <FormCard className="mt-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.refresh.minHealthy")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={minHealthy}
+            onChange={(e) => setMinHealthy(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+            className={cn(inputCls, "w-24")}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>{t("asg.refresh.warmup")}</FieldLabel>
+          <input
+            type="number"
+            min={0}
+            value={warmup}
+            onChange={(e) => setWarmup(e.target.value)}
+            placeholder={t("asg.refresh.warmupHint")}
+            className={cn(inputCls, "w-32")}
+          />
+        </label>
+        <Button variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
+          {t("asg.startRefresh")}
+        </Button>
+      </div>
+    </FormCard>
+  );
+}
+
+function InstanceRefreshSection({
+  asgName,
+  refreshes,
+}: {
+  asgName: string;
+  refreshes: AsgInstanceRefresh[];
+}) {
+  const { t, i18n } = useTranslation();
+  return (
+    <div>
+      <SectionTitle>{t("asg.section.instanceRefresh")}</SectionTitle>
+      {refreshes.length === 0 ? (
+        <p className="text-sm text-slate-500">{t("asg.noRefreshes")}</p>
+      ) : (
+        <Table>
+          <Thead sticky={false}>
+            <tr>
+              <Th>{t("asg.refresh.id")}</Th>
+              <Th>{t("asg.refresh.status")}</Th>
+              <Th>{t("asg.refresh.progress")}</Th>
+              <Th>{t("asg.refresh.start")}</Th>
+              <Th>{t("asg.refresh.end")}</Th>
+            </tr>
+          </Thead>
+          <tbody>
+            {refreshes.map((r) => (
+              <Tr key={r.id}>
+                <Td mono>{r.id}</Td>
+                <Td>{r.status ?? "—"}</Td>
+                <Td>{r.percentageComplete != null ? `${r.percentageComplete}%` : "—"}</Td>
+                <Td muted>{formatDate(r.startTime, i18n.language)}</Td>
+                <Td muted>{formatDate(r.endTime, i18n.language)}</Td>
+              </Tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+      <AddInstanceRefreshForm asgName={asgName} />
+    </div>
+  );
+}
+
 function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
@@ -546,6 +647,11 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
   const detail = useQuery({
     queryKey: ["asg-detail", name],
     queryFn: () => api.getAutoScalingGroupDetail(name),
+    // Poll while an instance refresh is mid-flight so progress updates on its own.
+    refetchInterval: (q) =>
+      q.state.data?.instanceRefreshes.some((r) => REFRESH_ACTIVE.has(r.status ?? ""))
+        ? 4000
+        : false,
   });
 
   const deletePolicy = useMutation({
@@ -697,6 +803,8 @@ function AsgDetailPanel({ name, onClose }: { name: string; onClose: () => void }
               )}
               <AddScheduledForm asgName={name} />
             </div>
+
+            <InstanceRefreshSection asgName={name} refreshes={detail.data.instanceRefreshes} />
           </div>
         ) : null}
       </div>

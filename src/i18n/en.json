@@ -440,6 +440,18 @@
         "title": "Environment variables",
         "description": "Key/value pairs passed to the function at runtime.",
         "saved": "Environment variables saved"
+      },
+      "code": {
+        "title": "Code",
+        "description": "Browse and edit the deployment package source, then deploy.",
+        "save": "Deploy",
+        "saved": "Code deployed",
+        "unsaved": "Unsaved changes",
+        "empty": "The deployment package is empty.",
+        "binary": "binary",
+        "binaryNotice": "This file is binary and can't be edited here; it is preserved on deploy.",
+        "imagePackage": "This function uses a container image; source editing isn't available.",
+        "unavailable": "Code can't be downloaded here. The Lambda code bucket may not allow browser access (CORS)."
       }
     },
     "layer": {
@@ -885,6 +897,9 @@
     "deleteListener": "Delete listener",
     "listenerDeleted": "Listener deleted",
     "pickTargetGroup": "Forward to…",
+    "addTargetGroup": "Add target group",
+    "weight": "Weight",
+    "weightedHint": "(weighted)",
     "actionForward": "Forward",
     "actionFixed": "Fixed response",
     "responseBody": "Response body",
@@ -989,7 +1004,8 @@
       "capacity": "Capacity",
       "instances": "Instances",
       "policies": "Scaling policies",
-      "scheduled": "Scheduled actions"
+      "scheduled": "Scheduled actions",
+      "instanceRefresh": "Instance refresh"
     },
     "inst": {
       "id": "Instance ID",
@@ -1015,6 +1031,19 @@
     "addScheduled": "Add scheduled action",
     "scheduledAdded": "Scheduled action added",
     "scheduledDeleted": "Scheduled action deleted",
+    "startRefresh": "Start instance refresh",
+    "refreshStarted": "Instance refresh started",
+    "noRefreshes": "No instance refreshes",
+    "refresh": {
+      "id": "Refresh ID",
+      "status": "Status",
+      "progress": "Progress",
+      "start": "Started",
+      "end": "Ended",
+      "minHealthy": "Min healthy %",
+      "warmup": "Warmup (s)",
+      "warmupHint": "default"
+    },
     "metric": {
       "cpu": "Average CPU utilization",
       "albRequests": "ALB request count per target"

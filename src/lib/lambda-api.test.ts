@@ -7,10 +7,12 @@ import {
   LambdaClient,
   ListFunctionsCommand,
   ListLayersCommand,
+  UpdateFunctionCodeCommand,
   UpdateFunctionConfigurationCommand,
 } from "@aws-sdk/client-lambda";
 import { mockClient } from "aws-sdk-client-mock";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useSettings } from "@/store/settings";
 import { api } from "./lambda-api";
 
 const lambda = mockClient(LambdaClient);
@@ -217,5 +219,81 @@ describe("write/command shapes", () => {
       LayerName: "layer-1",
       VersionNumber: 3,
     });
+  });
+
+  it("updateFunctionCode sends the zip bytes", async () => {
+    lambda.on(UpdateFunctionCodeCommand).resolves({});
+    const zip = new Uint8Array([80, 75, 3, 4]);
+    await api.updateFunctionCode("fn-1", zip);
+    expect(lambda.commandCalls(UpdateFunctionCodeCommand)[0]?.args[0].input).toEqual({
+      FunctionName: "fn-1",
+      ZipFile: zip,
+    });
+  });
+});
+
+describe("getFunctionCode", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("downloads and returns the package bytes from Code.Location", async () => {
+    lambda.on(GetFunctionCommand).resolves({ Code: { Location: "https://example.com/code.zip" } });
+    const bytes = new Uint8Array([1, 2, 3]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => bytes.buffer }),
+    );
+    const out = await api.getFunctionCode("fn-1");
+    expect(Array.from(out)).toEqual([1, 2, 3]);
+  });
+
+  it("throws when there is no code location", async () => {
+    lambda.on(GetFunctionCommand).resolves({ Code: {} });
+    await expect(api.getFunctionCode("fn-1")).rejects.toThrow(/No downloadable code/);
+  });
+
+  it("throws when the download fails (e.g. CORS/non-2xx)", async () => {
+    lambda.on(GetFunctionCommand).resolves({ Code: { Location: "https://example.com/code.zip" } });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+    await expect(api.getFunctionCode("fn-1")).rejects.toThrow(/Failed to download code \(403\)/);
+  });
+
+  it("rewrites the presigned URL host/port to the configured endpoint, keeping path+query", async () => {
+    const prev = useSettings.getState().settings;
+    useSettings.setState({ settings: { ...prev, endpoint: "http://localhost:4599" } });
+    lambda.on(GetFunctionCommand).resolves({
+      // LocalStack-style: internal host + SigV2 query the endpoint doesn't serve at :4566.
+      Code: {
+        Location:
+          "http://localhost.localstack.cloud:4566/awslambda-us-east-1-tasks/snap/fn-x?AWSAccessKeyId=abc&Signature=sig%2Fx&Expires=123",
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, arrayBuffer: async () => new Uint8Array([9]).buffer });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.getFunctionCode("fn-x");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:4599/awslambda-us-east-1-tasks/snap/fn-x?AWSAccessKeyId=abc&Signature=sig%2Fx&Expires=123",
+    );
+
+    useSettings.setState({ settings: prev });
+  });
+
+  it("leaves the URL unchanged when no endpoint is set (real AWS)", async () => {
+    const prev = useSettings.getState().settings;
+    useSettings.setState({ settings: { ...prev, endpoint: "" } });
+    lambda
+      .on(GetFunctionCommand)
+      .resolves({ Code: { Location: "https://real-bucket.s3.amazonaws.com/key?sig=1" } });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, arrayBuffer: async () => new Uint8Array([9]).buffer });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.getFunctionCode("fn-y");
+    expect(fetchMock).toHaveBeenCalledWith("https://real-bucket.s3.amazonaws.com/key?sig=1");
+
+    useSettings.setState({ settings: prev });
   });
 });

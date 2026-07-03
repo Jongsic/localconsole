@@ -445,7 +445,9 @@ function ListenerCard({
   const [priority, setPriority] = useState("10");
   const [field, setField] = useState<"path-pattern" | "host-header">("path-pattern");
   const [values, setValues] = useState("");
-  const [tgArn, setTgArn] = useState("");
+  const [targets, setTargets] = useState<{ arn: string; weight: number }[]>([
+    { arn: "", weight: 1 },
+  ]);
 
   const tags = useQuery({
     queryKey: ["listener-tags", listener.arn],
@@ -462,6 +464,8 @@ function ListenerCard({
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const chosenTargets = targets.filter((tg) => tg.arn);
+
   const addRule = useMutation({
     mutationFn: () =>
       api.createRule({
@@ -469,17 +473,23 @@ function ListenerCard({
         priority: Number(priority) || 1,
         conditionField: field,
         values,
-        targetGroupArn: tgArn,
+        targets: chosenTargets.map((tg) => ({ targetGroupArn: tg.arn, weight: tg.weight })),
       }),
     onSuccess: () => {
       toast.success(t("alb.ruleCreated"));
       setValues("");
-      setTgArn("");
+      setTargets([{ arn: "", weight: 1 }]);
       setAdding(false);
       onChanged();
     },
     onError: (e) => toast.error((e as Error).message),
   });
+
+  const setTarget = (i: number, patch: Partial<{ arn: string; weight: number }>) =>
+    setTargets((prev) => prev.map((tg, idx) => (idx === i ? { ...tg, ...patch } : tg)));
+  const addTarget = () => setTargets((prev) => [...prev, { arn: "", weight: 1 }]);
+  const removeTarget = (i: number) =>
+    setTargets((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev));
 
   const delRule = useMutation({
     mutationFn: (ruleArn: string) => api.deleteRule(ruleArn),
@@ -564,25 +574,65 @@ function ListenerCard({
                 className={cn(CONTROL_CLASS, "w-full min-w-[10rem] py-1.5 font-mono")}
               />
             </label>
-            {/* biome-ignore lint/a11y/noLabelWithoutControl: the <Select> control is nested inside the label */}
-            <label className="flex flex-1 flex-col gap-1.5">
-              <FieldLabel>{t("compute.targetGroups")}</FieldLabel>
-              <Select
-                value={tgArn}
-                onChange={(e) => setTgArn(e.target.value)}
-                className="w-full min-w-[10rem] py-1.5"
-              >
-                <option value="">{t("alb.pickTargetGroup")}</option>
-                {targetGroups.map((tg) => (
-                  <option key={tg.arn} value={tg.arn}>
-                    {tg.name}
-                  </option>
+            <div className="flex flex-1 flex-col gap-1.5">
+              <FieldLabel>
+                {t("compute.targetGroups")}
+                {chosenTargets.length > 1 && (
+                  <span className="ml-1 font-normal text-slate-400">{t("alb.weightedHint")}</span>
+                )}
+              </FieldLabel>
+              <div className="flex flex-col gap-2">
+                {targets.map((tg, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: rows are positional, no stable id
+                  <div key={i} className="flex items-center gap-2">
+                    <Select
+                      value={tg.arn}
+                      onChange={(e) => setTarget(i, { arn: e.target.value })}
+                      className="min-w-[10rem] flex-1 py-1.5"
+                    >
+                      <option value="">{t("alb.pickTargetGroup")}</option>
+                      {targetGroups.map((g) => (
+                        <option key={g.arn} value={g.arn}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </Select>
+                    {targets.length > 1 && (
+                      <input
+                        type="number"
+                        min={0}
+                        value={tg.weight}
+                        onChange={(e) =>
+                          setTarget(i, { weight: Math.max(0, Number(e.target.value) || 0) })
+                        }
+                        title={t("alb.weight")}
+                        className={cn(CONTROL_CLASS, "w-20 py-1.5")}
+                      />
+                    )}
+                    {targets.length > 1 && (
+                      <button
+                        type="button"
+                        title={t("common.remove")}
+                        onClick={() => removeTarget(i)}
+                        className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 ))}
-              </Select>
-            </label>
+                <button
+                  type="button"
+                  onClick={addTarget}
+                  className="self-start text-xs font-medium text-brand hover:underline"
+                >
+                  + {t("alb.addTargetGroup")}
+                </button>
+              </div>
+            </div>
             <Button
               loading={addRule.isPending}
-              disabled={!values.trim() || !tgArn || !priority.trim()}
+              disabled={!values.trim() || chosenTargets.length === 0 || !priority.trim()}
               onClick={() => addRule.mutate()}
             >
               {t("common.add")}

@@ -5,11 +5,13 @@ import {
   DeletePolicyCommand,
   DeleteScheduledActionCommand,
   DescribeAutoScalingGroupsCommand,
+  DescribeInstanceRefreshesCommand,
   DescribePoliciesCommand,
   DescribeScheduledActionsCommand,
   PutScalingPolicyCommand,
   type PutScalingPolicyCommandInput,
   PutScheduledUpdateGroupActionCommand,
+  StartInstanceRefreshCommand,
   UpdateAutoScalingGroupCommand,
 } from "@aws-sdk/client-auto-scaling";
 import { getAutoScalingClient } from "./autoscaling-client";
@@ -20,6 +22,7 @@ import type {
   CreateAsgInput,
   PutScalingPolicyInput,
   PutScheduledActionInput,
+  StartInstanceRefreshInput,
 } from "./types";
 
 function launchTemplateLabel(g: AutoScalingGroup): string | null {
@@ -65,6 +68,25 @@ export const api = {
     const g = groupsOut.AutoScalingGroups?.[0];
     if (!g) throw new Error(`Auto Scaling group ${name} not found`);
 
+    // Instance refreshes are best-effort: some backends don't implement the API.
+    let instanceRefreshes: AsgDetail["instanceRefreshes"] = [];
+    try {
+      const refreshOut = await client.send(
+        new DescribeInstanceRefreshesCommand({ AutoScalingGroupName: name }),
+      );
+      instanceRefreshes = (refreshOut.InstanceRefreshes ?? []).map((r) => ({
+        id: r.InstanceRefreshId ?? "",
+        status: r.Status ?? null,
+        statusReason: r.StatusReason ?? null,
+        percentageComplete: r.PercentageComplete ?? null,
+        instancesToUpdate: r.InstancesToUpdate ?? null,
+        startTime: r.StartTime ? r.StartTime.toISOString() : null,
+        endTime: r.EndTime ? r.EndTime.toISOString() : null,
+      }));
+    } catch {
+      instanceRefreshes = [];
+    }
+
     return {
       ...toSummary(g),
       instances: (g.Instances ?? []).map((i) => ({
@@ -89,7 +111,22 @@ export const api = {
         desiredCapacity: s.DesiredCapacity ?? null,
         startTime: s.StartTime ? s.StartTime.toISOString() : null,
       })),
+      instanceRefreshes,
     };
+  },
+
+  startInstanceRefresh: async (input: StartInstanceRefreshInput): Promise<void> => {
+    await getAutoScalingClient().send(
+      new StartInstanceRefreshCommand({
+        AutoScalingGroupName: input.asgName,
+        Preferences: {
+          MinHealthyPercentage: input.minHealthyPercentage,
+          ...(input.instanceWarmupSeconds != null
+            ? { InstanceWarmup: input.instanceWarmupSeconds }
+            : {}),
+        },
+      }),
+    );
   },
 
   createAutoScalingGroup: async (input: CreateAsgInput): Promise<void> => {

@@ -8,8 +8,10 @@ import {
   ListFunctionsCommand,
   ListLayersCommand,
   type Runtime,
+  UpdateFunctionCodeCommand,
   UpdateFunctionConfigurationCommand,
 } from "@aws-sdk/client-lambda";
+import { useSettings } from "@/store/settings";
 import { getLambdaClient } from "./lambda-client";
 import type {
   CreateFunctionInput,
@@ -18,6 +20,31 @@ import type {
   LambdaLayerSummary,
   UpdateFunctionConfigInput,
 } from "./types";
+
+/**
+ * Point a presigned Code.Location at the configured backend endpoint.
+ *
+ * Local emulators bake their *internal* host/port into the URL: LocalStack
+ * always returns `localhost.localstack.cloud:4566` even when mapped to another
+ * host port, and Floci returns a bare real-AWS host. Since S3 presigning (SigV2,
+ * and LocalStack's SigV4) covers the path + query but not the host, swapping the
+ * scheme/host/port to the endpoint we actually talk to makes the download
+ * reachable (and CORS-enabled, which emulators send). With no endpoint set (real
+ * AWS) the original URL is used unchanged.
+ */
+function codeUrlForEndpoint(location: string): string {
+  const endpoint = useSettings.getState().settings.endpoint.trim();
+  if (!endpoint) return location;
+  try {
+    const target = new URL(location);
+    const base = new URL(endpoint);
+    target.protocol = base.protocol;
+    target.host = base.host; // includes port
+    return target.toString();
+  } catch {
+    return location;
+  }
+}
 
 /** Shared mapping of the fields common to ListFunctions / GetFunctionConfiguration. */
 function summarize(f: FunctionConfiguration): LambdaFunctionSummary {
@@ -63,6 +90,28 @@ export const api = {
       environment: cfg.Environment?.Variables ?? {},
       codeLocation,
     };
+  },
+
+  /**
+   * Download a function's deployment package (zip bytes) via the presigned
+   * Code.Location URL, rewritten to the configured endpoint (see
+   * codeUrlForEndpoint). May still fail on real AWS if the code bucket doesn't
+   * return CORS headers to browsers; callers should treat errors as "code not
+   * viewable here" rather than fatal.
+   */
+  getFunctionCode: async (functionName: string): Promise<Uint8Array> => {
+    const fn = await getLambdaClient().send(new GetFunctionCommand({ FunctionName: functionName }));
+    const location = fn.Code?.Location;
+    if (!location) throw new Error("No downloadable code location for this function");
+    const res = await fetch(codeUrlForEndpoint(location));
+    if (!res.ok) throw new Error(`Failed to download code (${res.status})`);
+    return new Uint8Array(await res.arrayBuffer());
+  },
+
+  updateFunctionCode: async (functionName: string, zip: Uint8Array): Promise<void> => {
+    await getLambdaClient().send(
+      new UpdateFunctionCodeCommand({ FunctionName: functionName, ZipFile: zip }),
+    );
   },
 
   createFunction: async (input: CreateFunctionInput): Promise<void> => {

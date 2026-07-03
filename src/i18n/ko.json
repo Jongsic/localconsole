@@ -440,6 +440,18 @@
         "title": "환경 변수",
         "description": "런타임에 함수로 전달되는 키/값 쌍입니다.",
         "saved": "환경 변수가 저장되었습니다"
+      },
+      "code": {
+        "title": "코드",
+        "description": "배포 패키지 소스를 보고 수정한 뒤 배포합니다.",
+        "save": "배포",
+        "saved": "코드가 배포되었습니다",
+        "unsaved": "저장되지 않은 변경",
+        "empty": "배포 패키지가 비어 있습니다.",
+        "binary": "바이너리",
+        "binaryNotice": "바이너리 파일이라 여기서 편집할 수 없습니다. 배포 시 그대로 유지됩니다.",
+        "imagePackage": "이 함수는 컨테이너 이미지를 사용하므로 소스 편집을 지원하지 않습니다.",
+        "unavailable": "여기서 코드를 내려받을 수 없습니다. Lambda 코드 버킷이 브라우저 접근(CORS)을 허용하지 않을 수 있습니다."
       }
     },
     "layer": {
@@ -885,6 +897,9 @@
     "deleteListener": "리스너 삭제",
     "listenerDeleted": "리스너 삭제됨",
     "pickTargetGroup": "전달 대상…",
+    "addTargetGroup": "대상 그룹 추가",
+    "weight": "가중치",
+    "weightedHint": "(가중치)",
     "actionForward": "전달",
     "actionFixed": "고정 응답",
     "responseBody": "응답 본문",
@@ -989,7 +1004,8 @@
       "capacity": "용량",
       "instances": "인스턴스",
       "policies": "스케일링 정책",
-      "scheduled": "예약 작업"
+      "scheduled": "예약 작업",
+      "instanceRefresh": "인스턴스 리프레시"
     },
     "inst": {
       "id": "인스턴스 ID",
@@ -1015,6 +1031,19 @@
     "addScheduled": "예약 작업 추가",
     "scheduledAdded": "예약 작업 추가됨",
     "scheduledDeleted": "예약 작업 삭제됨",
+    "startRefresh": "인스턴스 리프레시 시작",
+    "refreshStarted": "인스턴스 리프레시 시작됨",
+    "noRefreshes": "인스턴스 리프레시 없음",
+    "refresh": {
+      "id": "리프레시 ID",
+      "status": "상태",
+      "progress": "진행률",
+      "start": "시작",
+      "end": "종료",
+      "minHealthy": "최소 정상 %",
+      "warmup": "워밍업 (초)",
+      "warmupHint": "기본값"
+    },
     "metric": {
       "cpu": "평균 CPU 사용률",
       "albRequests": "타깃당 ALB 요청 수"

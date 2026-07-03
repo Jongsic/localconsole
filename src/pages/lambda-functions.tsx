@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Zap } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -20,11 +20,22 @@ import { ResourceError } from "@/components/resource-error";
 import { TagsEditor } from "@/components/tags-editor";
 import { useToast } from "@/components/toast";
 import { Button, Field, FormCard, Modal, Select, Textarea, TextInput } from "@/components/ui";
+import { languageForFile } from "@/lib/code-language";
 import { api as iamApi } from "@/lib/iam-api";
 import { api } from "@/lib/lambda-api";
-import { handlerToFilename, zipInlineCode } from "@/lib/lambda-package";
+import {
+  handlerToFilename,
+  unzipToEntries,
+  type ZipEntry,
+  zipFromEntries,
+  zipInlineCode,
+} from "@/lib/lambda-package";
 import type { LambdaFunctionDetail, LambdaFunctionSummary, Tag } from "@/lib/types";
-import { formatBytes, formatDate } from "@/lib/utils";
+import { cn, formatBytes, formatDate } from "@/lib/utils";
+
+// Monaco is heavy (~MBs) and self-hosts its workers, so load it only when the
+// code section actually renders it — keeps it out of the main bundle.
+const CodeEditor = lazy(() => import("@/components/code-editor"));
 
 /** Short, sensible runtime list for the create form. */
 const RUNTIMES = ["nodejs20.x", "nodejs22.x", "python3.12", "python3.13", "ruby3.3"] as const;
@@ -455,6 +466,7 @@ export function LambdaFunctionDetailPage() {
 
             <ConfigSection fn={fn.data} />
             <EnvironmentSection fn={fn.data} />
+            <CodeSection fn={fn.data} />
           </div>
         ) : (
           <p className="text-sm text-slate-500">
@@ -559,6 +571,123 @@ function EnvironmentSection({ fn }: { fn: LambdaFunctionDetail }) {
   return (
     <FormCard title={t("function.fn.env.title")} description={t("function.fn.env.description")}>
       <TagsEditor current={current} saving={save.isPending} onSave={(tags) => save.mutate(tags)} />
+    </FormCard>
+  );
+}
+
+function CodeSection({ fn }: { fn: LambdaFunctionDetail }) {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const qc = useQueryClient();
+
+  // Local editable copy of the package entries, keyed off the fetched bytes.
+  const [entries, setEntries] = useState<ZipEntry[] | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const rawRef = useRef<Uint8Array | null>(null);
+
+  const isImage = fn.packageType === "Image";
+
+  const code = useQuery({
+    queryKey: ["lambda-code", fn.functionName],
+    queryFn: async () => {
+      const bytes = await api.getFunctionCode(fn.functionName);
+      rawRef.current = bytes;
+      return unzipToEntries(bytes);
+    },
+    enabled: !isImage,
+    retry: false,
+  });
+
+  // Seed the editable copy once the download+unzip resolves.
+  useEffect(() => {
+    if (code.data) {
+      setEntries(code.data);
+      setSelected(code.data.find((e) => e.text !== null)?.path ?? code.data[0]?.path ?? null);
+      setDirty(false);
+    }
+  }, [code.data]);
+
+  const current = entries?.find((e) => e.path === selected) ?? null;
+
+  const setFileText = (text: string) => {
+    setEntries((prev) => prev?.map((e) => (e.path === selected ? { ...e, text } : e)) ?? prev);
+    setDirty(true);
+  };
+
+  const save = useMutation({
+    mutationFn: () => {
+      if (!entries || !rawRef.current) throw new Error("No code loaded");
+      return api.updateFunctionCode(fn.functionName, zipFromEntries(entries, rawRef.current));
+    },
+    onSuccess: () => {
+      toast.success(t("function.fn.code.saved"));
+      setDirty(false);
+      qc.invalidateQueries({ queryKey: ["lambda-function", fn.functionName] });
+      qc.invalidateQueries({ queryKey: ["lambda-code", fn.functionName] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <FormCard title={t("function.fn.code.title")} description={t("function.fn.code.description")}>
+      {isImage ? (
+        <p className="text-sm text-slate-500">{t("function.fn.code.imagePackage")}</p>
+      ) : code.isLoading ? (
+        <TableLoading />
+      ) : code.isError ? (
+        <p className="text-sm text-slate-500">
+          {t("function.fn.code.unavailable")}
+          <span className="mt-1 block text-xs text-slate-400">{(code.error as Error).message}</span>
+        </p>
+      ) : entries && entries.length > 0 && current ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {entries.map((e) => (
+              <button
+                key={e.path}
+                type="button"
+                onClick={() => setSelected(e.path)}
+                className={cn(
+                  "rounded border px-2 py-1 font-mono text-xs transition-colors",
+                  e.path === selected
+                    ? "border-brand bg-brand-fg text-brand"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700",
+                )}
+              >
+                {e.path}
+                {e.text === null && (
+                  <span className="ml-1 text-slate-400">({t("function.fn.code.binary")})</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {current.text === null ? (
+            <p className="text-sm text-slate-500">{t("function.fn.code.binaryNotice")}</p>
+          ) : (
+            <Suspense fallback={<TableLoading />}>
+              <CodeEditor
+                key={current.path}
+                value={current.text}
+                language={languageForFile(current.path)}
+                onChange={setFileText}
+              />
+            </Suspense>
+          )}
+
+          <div className="flex items-center justify-end gap-2">
+            {dirty && (
+              <span className="text-xs text-amber-600">{t("function.fn.code.unsaved")}</span>
+            )}
+            <Button loading={save.isPending} disabled={!dirty} onClick={() => save.mutate()}>
+              {t("function.fn.code.save")}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">{t("function.fn.code.empty")}</p>
+      )}
     </FormCard>
   );
 }

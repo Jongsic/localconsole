@@ -306,6 +306,20 @@ export const api = {
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
+    const targets = input.targets.filter((tg) => tg.targetGroupArn);
+    // A single target is a plain forward; multiple targets become a weighted forward.
+    const action: Action =
+      targets.length === 1
+        ? { Type: "forward", TargetGroupArn: targets[0]?.targetGroupArn }
+        : {
+            Type: "forward",
+            ForwardConfig: {
+              TargetGroups: targets.map((tg) => ({
+                TargetGroupArn: tg.targetGroupArn,
+                Weight: tg.weight,
+              })),
+            },
+          };
     await getElbv2Client().send(
       new CreateRuleCommand({
         ListenerArn: input.listenerArn,
@@ -315,7 +329,7 @@ export const api = {
             ? { Field: "path-pattern", PathPatternConfig: { Values: values } }
             : { Field: "host-header", HostHeaderConfig: { Values: values } },
         ],
-        Actions: [{ Type: "forward", TargetGroupArn: input.targetGroupArn }],
+        Actions: [action],
       }),
     );
   },

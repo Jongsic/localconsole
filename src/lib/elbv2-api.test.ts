@@ -377,14 +377,14 @@ describe("write/command shapes", () => {
     ]);
   });
 
-  it("createRule splits comma values and builds a path-pattern condition", async () => {
+  it("createRule splits comma values, builds a path-pattern condition, single plain forward", async () => {
     elbv2.on(CreateRuleCommand).resolves({});
     await api.createRule({
       listenerArn: "arn:listener",
       priority: 5,
       conditionField: "path-pattern",
       values: "/api/*, /v2/* ,",
-      targetGroupArn: "arn:tg",
+      targets: [{ targetGroupArn: "arn:tg", weight: 1 }],
     });
     const input = elbv2.commandCalls(CreateRuleCommand)[0]?.args[0].input;
     expect(input?.Priority).toBe(5);
@@ -401,10 +401,35 @@ describe("write/command shapes", () => {
       priority: 5,
       conditionField: "host-header",
       values: "api.example.com",
-      targetGroupArn: "arn:tg",
+      targets: [{ targetGroupArn: "arn:tg", weight: 1 }],
     });
     expect(elbv2.commandCalls(CreateRuleCommand)[0]?.args[0].input?.Conditions).toEqual([
       { Field: "host-header", HostHeaderConfig: { Values: ["api.example.com"] } },
+    ]);
+  });
+
+  it("createRule builds a weighted forward when multiple targets are given", async () => {
+    elbv2.on(CreateRuleCommand).resolves({});
+    await api.createRule({
+      listenerArn: "arn:listener",
+      priority: 7,
+      conditionField: "path-pattern",
+      values: "/*",
+      targets: [
+        { targetGroupArn: "arn:tg-a", weight: 80 },
+        { targetGroupArn: "arn:tg-b", weight: 20 },
+      ],
+    });
+    expect(elbv2.commandCalls(CreateRuleCommand)[0]?.args[0].input?.Actions).toEqual([
+      {
+        Type: "forward",
+        ForwardConfig: {
+          TargetGroups: [
+            { TargetGroupArn: "arn:tg-a", Weight: 80 },
+            { TargetGroupArn: "arn:tg-b", Weight: 20 },
+          ],
+        },
+      },
     ]);
   });
 });

@@ -284,6 +284,13 @@ export type AlbRuleSummary = {
   actions: string[];
 };
 
+/** One target group in a (possibly weighted) forward action. */
+export type ForwardTarget = {
+  targetGroupArn: string;
+  /** Relative weight for weighted forwarding. Ignored when a single target is given. */
+  weight: number;
+};
+
 export type CreateRuleInput = {
   listenerArn: string;
   priority: number;
@@ -291,7 +298,8 @@ export type CreateRuleInput = {
   conditionField: "path-pattern" | "host-header";
   /** comma-separated values, e.g. "/api/*" or "api.example.com" */
   values: string;
-  targetGroupArn: string;
+  /** One or more target groups. Multiple targets create a weighted forward. */
+  targets: ForwardTarget[];
 };
 
 export type AlbListenerDetail = {
@@ -418,10 +426,29 @@ export type AsgScheduledAction = {
   startTime: string | null;
 };
 
+export type AsgInstanceRefresh = {
+  id: string;
+  status: string | null;
+  statusReason: string | null;
+  percentageComplete: number | null;
+  instancesToUpdate: number | null;
+  startTime: string | null;
+  endTime: string | null;
+};
+
 export type AsgDetail = AsgSummary & {
   instances: AsgInstance[];
   policies: AsgPolicy[];
   scheduledActions: AsgScheduledAction[];
+  instanceRefreshes: AsgInstanceRefresh[];
+};
+
+export type StartInstanceRefreshInput = {
+  asgName: string;
+  /** Minimum % of the group kept in service during the refresh (default 90). */
+  minHealthyPercentage: number;
+  /** Seconds each new instance is given to warm up before counting as healthy. */
+  instanceWarmupSeconds: number | null;
 };
 
 export type CreateAsgInput = {
