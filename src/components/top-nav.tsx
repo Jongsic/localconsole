@@ -29,7 +29,7 @@ export function TopNav() {
     <header className="flex items-center gap-4 border-b border-slate-200 bg-white px-4">
       <Link to="/s3" className="flex items-center gap-2 py-2.5">
         <Boxes className="h-6 w-6 text-brand" />
-        <span className="text-sm font-semibold text-slate-900">OpenConsole</span>
+        <span className="text-sm font-semibold text-slate-900">LocalConsole</span>
       </Link>
 
       <nav className="flex items-center gap-1">

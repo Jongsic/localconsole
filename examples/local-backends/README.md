@@ -1,6 +1,6 @@
 # Local backends
 
-Docker Compose for spinning up AWS-compatible backends to try OpenConsole against.
+Docker Compose for spinning up AWS-compatible backends to try LocalConsole against.
 Each backend is behind a [profile](https://docs.docker.com/compose/profiles/) — start only what you need:
 
 ```bash

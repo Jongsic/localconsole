@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in improving OpenConsole! Contributions of any size are welcome.
+Thanks for your interest in improving LocalConsole! Contributions of any size are welcome.
 
 ## Development setup
 
@@ -36,7 +36,7 @@ pnpm build
 
 ## Testing
 
-OpenConsole has two test tiers:
+LocalConsole has two test tiers:
 
 - **Unit (Tier 1)** — `pnpm test`. Runs offline in jsdom with the AWS SDK mocked
   (`aws-sdk-client-mock`); render components via the helper in `src/test/render.tsx`. Tests are

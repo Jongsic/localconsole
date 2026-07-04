@@ -43,7 +43,7 @@ jobs:
 
       - name: Package static bundle + checksums
         run: |
-          name="openconsole-${GITHUB_REF_NAME}-static.zip"
+          name="localconsole-${GITHUB_REF_NAME}-static.zip"
           (cd dist && zip -qr "../$name" .)
           sha256sum "$name" > SHA256SUMS.txt
           echo "ASSET=$name" >> "$GITHUB_ENV"
@@ -76,7 +76,7 @@ jobs:
           ghcr="ghcr.io/${GITHUB_REPOSITORY,,}"
           tags="${ghcr}:${version},${ghcr}:latest"
           if [ -n "$DOCKERHUB_USERNAME" ]; then
-            dh="docker.io/${DOCKERHUB_USERNAME}/openconsole"
+            dh="docker.io/${DOCKERHUB_USERNAME}/localconsole"
             tags="${tags},${dh}:${version},${dh}:latest"
           fi
           echo "tags=${tags}" >> "$GITHUB_OUTPUT"
@@ -127,7 +127,7 @@ jobs:
       - name: Prune untagged GHCR versions
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          package: openconsole
+          package: localconsole
           delete-untagged: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -140,6 +140,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/openconsole
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/localconsole
           short-description: "A browser-only console for LocalStack, MinIO, and AWS"
           readme-filepath: ./README.md

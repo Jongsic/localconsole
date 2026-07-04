@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  // Support sub-path deployment such as GitHub Pages project sites (e.g. VITE_BASE=/openconsole/)
+  // Support sub-path deployment such as GitHub Pages project sites (e.g. VITE_BASE=/localconsole/)
   base: process.env.VITE_BASE || "/",
   plugins: [react()],
   resolve: {

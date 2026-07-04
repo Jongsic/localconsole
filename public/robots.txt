@@ -1,4 +1,4 @@
-# OpenConsole — public, free software (The Unlicense). Crawling is welcome.
+# LocalConsole — public, free software (The Unlicense). Crawling is welcome.
 # To opt a specific AI crawler out, change its "Allow: /" to "Disallow: /".
 
 User-agent: *

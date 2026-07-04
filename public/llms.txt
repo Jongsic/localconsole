@@ -1,4 +1,4 @@
-# OpenConsole
+# LocalConsole
 
 > A browser-only console for LocalStack, Floci, moto, MinIO, or real AWS. There is no server: the browser talks to the endpoint directly using the AWS SDK, and connection settings are stored in the browser's localStorage. Because requests come from the visitor's browser, the app can be hosted on a public domain and still reach each visitor's own local backend.
 

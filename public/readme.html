@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenConsole — Guide</title>
+    <title>LocalConsole — Guide</title>
     <style>
       :root {
         --brand: #6c2bd9;
@@ -133,7 +133,7 @@
               <path d="m3.3 7 8.7 5 8.7-5" />
               <path d="M12 22V12" />
             </svg>
-            OpenConsole
+            LocalConsole
           </div>
           <div class="lang">
             <button type="button" data-lang="en">EN</button>
@@ -162,7 +162,7 @@
       <main>
         <div class="topbar">
           <div>
-            <h1>OpenConsole</h1>
+            <h1>LocalConsole</h1>
             <div class="sub i18n" data-en="Browser-only console for LocalStack, MinIO &amp; AWS" data-ko="LocalStack·MinIO·AWS용 브라우저 전용 콘솔"></div>
           </div>
         </div>
@@ -170,8 +170,8 @@
         <!-- INTRO -->
         <h2 id="intro" class="i18n" data-en="Introduction" data-ko="소개"></h2>
         <p class="i18n"
-          data-en="OpenConsole is a browser-only console for LocalStack, Floci, moto, MinIO, or real AWS. There is no server: your browser talks to the endpoint directly using the AWS SDK, and connection settings are stored in your browser's localStorage."
-          data-ko="OpenConsole은 LocalStack, Floci, moto, MinIO, 실제 AWS를 위한 브라우저 전용 콘솔입니다. 서버가 없으며, 브라우저가 AWS SDK로 엔드포인트와 직접 통신하고 연결 설정은 브라우저 localStorage에 저장됩니다."></p>
+          data-en="LocalConsole is a browser-only console for LocalStack, Floci, moto, MinIO, or real AWS. There is no server: your browser talks to the endpoint directly using the AWS SDK, and connection settings are stored in your browser's localStorage."
+          data-ko="LocalConsole은 LocalStack, Floci, moto, MinIO, 실제 AWS를 위한 브라우저 전용 콘솔입니다. 서버가 없으며, 브라우저가 AWS SDK로 엔드포인트와 직접 통신하고 연결 설정은 브라우저 localStorage에 저장됩니다."></p>
         <div class="note info i18n"
           data-en="A fully functional app — free, no sign-up, no account. It is a static site that runs entirely in your browser; it sends no data to any server of ours and performs no tracking or analytics. Your endpoint and credentials never leave your browser."
           data-ko="완전히 동작하는 앱입니다 — 무료, 가입 불필요, 계정 불필요. 브라우저에서 전부 실행되는 정적 사이트로, 저희 서버로 어떤 데이터도 전송하지 않으며 추적·분석도 하지 않습니다. 엔드포인트와 자격증명은 브라우저를 벗어나지 않습니다."></div>
@@ -230,9 +230,9 @@ pnpm dev
         <p class="i18n"
           data-en="Easiest: pull the prebuilt image (nginx serving the static bundle) and run it — no build needed. It has no runtime dependency on a backend."
           data-ko="가장 간단한 방법: 미리 빌드된 이미지(nginx가 정적 번들을 서빙)를 받아 실행하면 됩니다. 빌드 불필요하며, 백엔드에 대한 런타임 의존성도 없습니다."></p>
-        <pre><code>docker run -p 3939:80 jongsic/openconsole
+        <pre><code>docker run -p 3939:80 jongsic/localconsole
 # or from GitHub Container Registry:
-docker run -p 3939:80 ghcr.io/jongsic/openconsole:latest
+docker run -p 3939:80 ghcr.io/jongsic/localconsole:latest
 # → http://localhost:3939</code></pre>
         <p class="i18n"
           data-en="Or build the image yourself:"
@@ -245,8 +245,8 @@ RUN corepack enable &amp;&amp; pnpm install --frozen-lockfile &amp;&amp; pnpm bu
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html</code></pre>
-        <pre><code>docker build -t openconsole .
-docker run -p 3939:80 openconsole</code></pre>
+        <pre><code>docker build -t localconsole .
+docker run -p 3939:80 localconsole</code></pre>
 
         <h3 id="usage-online" class="i18n" data-en="Use a hosted site" data-ko="온라인 사이트에서 사용"></h3>
         <p class="i18n"
@@ -300,8 +300,8 @@ docker run -p 3939:80 openconsole</code></pre>
         <!-- SETUP -->
         <h2 id="setup" class="i18n" data-en="Required setup" data-ko="필수 설정"></h2>
         <p class="i18n"
-          data-en="OpenConsole auto-detects the backend on your endpoint, but you still need to (1) provide credentials and (2) — for browser access — allow CORS from this origin:"
-          data-ko="OpenConsole은 엔드포인트에서 백엔드를 자동으로 감지하지만, (1) 자격증명 입력과 (2) 브라우저 접근을 위한 이 origin의 CORS 허용은 직접 해야 합니다:"></p>
+          data-en="LocalConsole auto-detects the backend on your endpoint, but you still need to (1) provide credentials and (2) — for browser access — allow CORS from this origin:"
+          data-ko="LocalConsole은 엔드포인트에서 백엔드를 자동으로 감지하지만, (1) 자격증명 입력과 (2) 브라우저 접근을 위한 이 origin의 CORS 허용은 직접 해야 합니다:"></p>
         <p><code class="js-origin">http://localhost:3939</code></p>
         <div class="note warn i18n"
           data-en="Credentials are stored in plain text in your browser's localStorage. Use least-privilege keys, especially for real AWS."
@@ -395,8 +395,8 @@ MINIO_API_CORS_ALLOW_ORIGIN=<span class="js-origin">http://localhost:3939</span>
         <!-- DISCLAIMER -->
         <h2 id="disclaimer" class="i18n" data-en="Disclaimer" data-ko="면책"></h2>
         <p class="i18n"
-          data-en="OpenConsole is released into the public domain under The Unlicense and provided 'AS IS', without warranty of any kind. Your credentials are stored in your browser's localStorage in plain text and all requests go directly from your browser to the endpoint you configure. To the maximum extent permitted by law, the authors are not liable for any damages, credential exposure, data loss, or cloud-provider charges arising from its use — you use it entirely at your own risk."
-          data-ko="OpenConsole은 The Unlicense로 퍼블릭 도메인에 공개되며 어떠한 보증도 없이 '있는 그대로(AS IS)' 제공됩니다. 자격증명은 브라우저 localStorage에 평문으로 저장되고 모든 요청은 브라우저에서 설정한 엔드포인트로 직접 전송됩니다. 법이 허용하는 최대 범위에서, 저자는 사용으로 인한 손해·자격증명 노출·데이터 손실·클라우드 비용에 대해 책임지지 않으며, 사용에 대한 책임은 전적으로 사용자에게 있습니다."></p>
+          data-en="LocalConsole is released into the public domain under The Unlicense and provided 'AS IS', without warranty of any kind. Your credentials are stored in your browser's localStorage in plain text and all requests go directly from your browser to the endpoint you configure. To the maximum extent permitted by law, the authors are not liable for any damages, credential exposure, data loss, or cloud-provider charges arising from its use — you use it entirely at your own risk."
+          data-ko="LocalConsole은 The Unlicense로 퍼블릭 도메인에 공개되며 어떠한 보증도 없이 '있는 그대로(AS IS)' 제공됩니다. 자격증명은 브라우저 localStorage에 평문으로 저장되고 모든 요청은 브라우저에서 설정한 엔드포인트로 직접 전송됩니다. 법이 허용하는 최대 범위에서, 저자는 사용으로 인한 손해·자격증명 노출·데이터 손실·클라우드 비용에 대해 책임지지 않으며, 사용에 대한 책임은 전적으로 사용자에게 있습니다."></p>
       </main>
     </div>
 

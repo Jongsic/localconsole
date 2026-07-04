@@ -1,10 +1,10 @@
 {
-  "name": "openconsole",
+  "name": "localconsole",
   "version": "0.3.0",
   "private": true,
   "type": "module",
   "license": "Unlicense",
-  "description": "OpenConsole — a browser-only console for LocalStack, MinIO, and AWS",
+  "description": "LocalConsole — a browser-only console for LocalStack, MinIO, and AWS",
   "keywords": [
     "s3",
     "aws",
@@ -17,13 +17,13 @@
     "react",
     "vite"
   ],
-  "homepage": "https://jongsic.github.io/openconsole/",
+  "homepage": "https://jongsic.github.io/localconsole/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jongsic/openconsole.git"
+    "url": "git+https://github.com/Jongsic/localconsole.git"
   },
   "bugs": {
-    "url": "https://github.com/Jongsic/openconsole/issues"
+    "url": "https://github.com/Jongsic/localconsole/issues"
   },
   "author": "Jongsic",
   "packageManager": "pnpm@10.8.1",

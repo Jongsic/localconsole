@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Agent instructions for OpenConsole, following the [AGENTS.md standard](https://agents.md/).
+Agent instructions for LocalConsole, following the [AGENTS.md standard](https://agents.md/).
 If your coding agent expects a different filename, symlink it instead of copying:
 
 ```bash
@@ -9,7 +9,7 @@ ln -s AGENTS.md CLAUDE.md
 
 ## Project Overview
 
-OpenConsole is a **browser-only** web console for AWS-compatible backends — LocalStack,
+LocalConsole is a **browser-only** web console for AWS-compatible backends — LocalStack,
 Floci, moto, MinIO, or real AWS. It is a static single-page app (React + Vite); there is
 **no backend of our own**. The browser talks to the user's endpoint directly with the AWS
 SDK for JavaScript v3, and connection settings live in `localStorage`.

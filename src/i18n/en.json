@@ -580,7 +580,7 @@
   },
   "setup": {
     "title": "Connect to a backend",
-    "intro": "OpenConsole talks to your backend directly from the browser. Configure the connection to get started.",
+    "intro": "LocalConsole talks to your backend directly from the browser. Configure the connection to get started.",
     "detecting": "Detecting backend on the default endpoint…",
     "detected": "Detected: {{backend}}",
     "notDetected": "No backend auto-detected. Enter the settings manually.",

@@ -1,4 +1,4 @@
-# Local AWS-compatible backends for trying OpenConsole against.
+# Local AWS-compatible backends for trying LocalConsole against.
 #
 # Each backend sits behind a Compose *profile*, so you start only what you need:
 #
@@ -23,7 +23,7 @@
 #   docker compose --profile <name> down            # stop
 #   docker compose --profile <name> down -v         # stop + drop data volumes
 
-name: openconsole-backends
+name: localconsole-backends
 
 services:
   # Floci — github.com/floci-io/floci. LocalStack drop-in that really runs
@@ -40,7 +40,7 @@ services:
       # Lets an HTTPS-hosted UI reach this loopback floci (Chrome Private Network Access).
       # No-op on current images — takes effect once floci-io/floci#1530 is merged & released.
       FLOCI_SECURITY_CORS_ALLOW_PRIVATE_NETWORK: "true"
-      FLOCI_SERVICES_DOCKER_NETWORK: openconsole-backends_default
+      FLOCI_SERVICES_DOCKER_NETWORK: localconsole-backends_default
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - floci-data:/app/data

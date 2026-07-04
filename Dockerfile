@@ -18,11 +18,11 @@ ARG VERSION=dev
 ARG REVISION=dev
 ARG CREATED=1970-01-01T00:00:00Z
 # OCI metadata — `source` lets GHCR auto-link the package to the repo (and show its README).
-LABEL org.opencontainers.image.title="OpenConsole" \
+LABEL org.opencontainers.image.title="LocalConsole" \
       org.opencontainers.image.description="A browser-only console for LocalStack, MinIO, and AWS" \
-      org.opencontainers.image.url="https://jongsic.github.io/openconsole/" \
-      org.opencontainers.image.documentation="https://github.com/Jongsic/openconsole#readme" \
-      org.opencontainers.image.source="https://github.com/Jongsic/openconsole" \
+      org.opencontainers.image.url="https://jongsic.github.io/localconsole/" \
+      org.opencontainers.image.documentation="https://github.com/Jongsic/localconsole#readme" \
+      org.opencontainers.image.source="https://github.com/Jongsic/localconsole" \
       org.opencontainers.image.vendor="Jongsic" \
       org.opencontainers.image.licenses="Unlicense" \
       org.opencontainers.image.version="${VERSION}" \

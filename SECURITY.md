@@ -2,7 +2,7 @@
 
 ## Security model
 
-OpenConsole is a **browser-only** application. There is no backend server and no
+LocalConsole is a **browser-only** application. There is no backend server and no
 telemetry:
 
 - All S3 requests are made **directly from your browser** to the endpoint you configure.
@@ -35,7 +35,7 @@ infrastructure. See the [LICENSE](LICENSE) file.
 
 ## Reporting a vulnerability
 
-If you discover a security issue in the OpenConsole code itself, please report it privately via
+If you discover a security issue in the LocalConsole code itself, please report it privately via
 GitHub's **"Report a vulnerability"** (Security advisories) on the repository, rather than
 opening a public issue. We will review and respond as time permits. Only the latest version on
 the default branch is supported.

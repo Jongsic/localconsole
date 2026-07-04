@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a problem with OpenConsole
+description: Report a problem with LocalConsole
 labels: ["bug"]
 body:
   - type: markdown
